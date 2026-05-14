@@ -202,21 +202,15 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
 
   const turnLabel = !currentTurn ? '等待对手加入' : isMyTurn ? '你的回合' : '对方回合';
   const colorLabel = myColor === 'red' ? '红方' : myColor === 'black' ? '黑方' : '颜色未知';
-  const colorDot = myColor === 'red' ? 'bg-red-500' : myColor === 'black' ? 'bg-slate-400' : 'bg-transparent border border-slate-500';
+
+  const gapY = (gy(5) + gy(6)) / 2;
+  const statusBg = isMyTurn ? '#eab308' : '#334155';
+  const statusTextColor = isMyTurn ? '#422006' : '#cbd5e1';
+  const myDotColor = myColor === 'red' ? '#ef4444' : myColor === 'black' ? '#94a3b8' : 'none';
+  const myDotStroke = myColor ? myDotColor : '#64748b';
 
   return (
-    <div className="flex flex-col gap-2">
-      {/* Status bar */}
-      <div className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold ${
-        isMyTurn ? 'bg-yellow-500 text-yellow-950' : 'bg-slate-700 text-slate-300'
-      } ${isMyTurn ? 'animate-pulse' : ''}`}>
-        <div className="flex items-center gap-2">
-          <span className={`w-3 h-3 rounded-full ${colorDot}`}/>
-          <span>{colorLabel}</span>
-        </div>
-        <span className="text-base">{isMyTurn ? '⚔ ' : ''}{turnLabel}</span>
-      </div>
-
+    <div className="flex flex-col gap-0">
       <div className="overflow-auto">
       <svg width={SVG_W} height={SVG_H} style={{background:'white', borderRadius:12, display:'block', border:'1px solid #e5e7eb'}}>
         {/* Mine indicators — left column: opponent mines, right column: my mines */}
@@ -230,10 +224,16 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
             fill={i < myMineCount ? myMineColor : 'none'}
             stroke={myMineColor} strokeWidth={2}/>
         ))}
+        {/* Status bar in the gap between rows 5 and 6 */}
+        <rect x={PAD - 4} y={gapY - 14} width={SVG_W - PAD * 2 + 8} height={28} rx={6} fill={statusBg}/>
+        <circle cx={PAD + 10} cy={gapY} r={6} fill={myDotColor} stroke={myDotStroke} strokeWidth={1.5}/>
+        <text x={PAD + 22} y={gapY} textAnchor="start" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{colorLabel}</text>
+        <text x={SVG_W - PAD + 4} y={gapY} textAnchor="end" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{turnLabel}</text>
         {lines}
         {cells}
       </svg>
       </div>
     </div>
   );
+
 }
