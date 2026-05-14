@@ -338,10 +338,9 @@ app.prepare().then(() => {
       }
 
       if (color) {
-        socket.emit('color_assigned', {
-          red: room.playerRed ?? '',
-          black: room.playerBlack ?? '',
-        });
+        const updatedRed = color === 'red' ? socket.id : (room.playerRed ?? '');
+        const updatedBlack = color === 'black' ? socket.id : (room.playerBlack ?? '');
+        socket.emit('color_assigned', { red: updatedRed, black: updatedBlack });
       }
     });
 
