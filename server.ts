@@ -328,14 +328,24 @@ app.prepare().then(() => {
       socket.emit('my_rooms', rooms.map(r => ({ code: r.code, updatedAt: r.updatedAt.toISOString() })));
     });
 
-    socket.on('leave_room', async () => {
+    socket.on('leave_room', () => {
       const sr = socketRooms.get(socket.id);
       if (!sr) return;
       const { roomCode } = sr;
       socket.to(roomCode).emit('player_left');
       socketRooms.delete(socket.id);
       socket.leave(roomCode);
-      await prisma.room.update({ where: { code: roomCode }, data: { status: 'finished' } });
+      // Game state preserved — player can rejoin later
+    });
+
+    socket.on('forfeit', async () => {
+      const sr = socketRooms.get(socket.id);
+      if (!sr || !sr.color) return;
+      const { roomCode } = sr;
+      const winner: Color = sr.color === 'red' ? 'black' : 'red';
+      await prisma.room.update({ where: { code: roomCode }, data: { status: 'finished', winner } });
+      io.to(roomCode).emit('game_over', winner);
+      socketRooms.delete(socket.id);
     });
 
     socket.on('disconnect', () => {

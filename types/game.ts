@@ -106,5 +106,6 @@ export interface ClientToServerEvents {
   flip_piece: (row: number, col: number) => void;
   move_piece: (fromRow: number, fromCol: number, toRow: number, toCol: number) => void;
   leave_room: () => void;
+  forfeit: () => void;
   get_my_rooms: (playerToken: string) => void;
 }
