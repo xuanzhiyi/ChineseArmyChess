@@ -224,11 +224,12 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
             fill={i < myMineCount ? myMineColor : 'none'}
             stroke={myMineColor} strokeWidth={2}/>
         ))}
-        {/* Status bar in the gap between rows 5 and 6 */}
-        <rect x={PAD - 4} y={gapY - 14} width={SVG_W - PAD * 2 + 8} height={28} rx={6} fill={statusBg}/>
-        <circle cx={PAD + 10} cy={gapY} r={6} fill={myDotColor} stroke={myDotStroke} strokeWidth={1.5}/>
-        <text x={PAD + 22} y={gapY} textAnchor="start" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{colorLabel}</text>
-        <text x={SVG_W - PAD + 4} y={gapY} textAnchor="end" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{turnLabel}</text>
+        {/* Status: left side — dot + color label, no background */}
+        <circle cx={PAD + 8} cy={gapY} r={6} fill={myDotColor} stroke={myDotStroke} strokeWidth={1.5}/>
+        <text x={PAD + 20} y={gapY} textAnchor="start" dy="0.35em" fill="#475569" fontSize={13} fontWeight="bold">{colorLabel}</text>
+        {/* Status: right side — turn label with pill background */}
+        <rect x={SVG_W - PAD - 86} y={gapY - 13} width={86} height={26} rx={13} fill={statusBg}/>
+        <text x={SVG_W - PAD - 43} y={gapY} textAnchor="middle" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{turnLabel}</text>
         {lines}
         {cells}
       </svg>
