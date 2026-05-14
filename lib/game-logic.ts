@@ -134,14 +134,14 @@ export function getValidMoves(
 
     if (!tp) return true; // empty cell, always ok
 
-    // Cannot attack face-down pieces
-    if (!tp.faceUp) return false;
-
-    // Cannot move onto own piece
+    // Cannot move onto own piece (even if face-down)
     if (tp.color === playerColor) return false;
 
-    // Mine blocks all except engineer and bomb
-    if (tp.rank === 'mine' && rank !== 'engineer' && rank !== 'bomb') return false;
+    // Cannot attack face-down pieces except engineer (can blindly attack enemy)
+    if (!tp.faceUp && rank !== 'engineer') return false;
+
+    // Mine blocks all except engineer and bomb (only relevant when face-up)
+    if (tp.faceUp && tp.rank === 'mine' && rank !== 'engineer' && rank !== 'bomb') return false;
 
     return true;
   });

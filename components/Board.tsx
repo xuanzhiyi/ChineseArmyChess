@@ -156,7 +156,11 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         }
 
         if (isValidDest && !piece) {
-          els.push(<circle key={`vm-${r}-${c}`} cx={cx} cy={cy} r={11} fill="#f6e05e" opacity={0.75} onClick={() => handleCellClick(r,c)} style={{cursor:'pointer'}}/>);
+          els.push(<circle key={`vm-${r}-${c}`} cx={cx} cy={cy} r={20} fill="#f6e05e" opacity={0.55} onClick={() => handleCellClick(r,c)} style={{cursor:'pointer'}}/>);
+          els.push(<circle key={`vms-${r}-${c}`} cx={cx} cy={cy} r={9} fill="#fbbf24" opacity={0.9} onClick={() => handleCellClick(r,c)} style={{cursor:'pointer'}}/>);
+        }
+        if (isValidDest) {
+          els.push(<rect key={`vr-${r}-${c}`} x={cx - CW/2} y={cy - CH/2} width={CW} height={CH} fill="transparent" onClick={() => handleCellClick(r,c)} style={{cursor:'pointer'}}/>);
         }
 
         if (piece) {
