@@ -13,9 +13,9 @@ const SVG_H = PAD * 2 + CH * 11 + GAP;
 function gx(col: number) { return PAD + col * CW; }
 function gy(row: number) { return PAD + row * CH + (row >= 6 ? GAP : 0); }
 
-const RAIL_COLOR = '#c0392b';
-const REG_COLOR = '#4a5568';
-const CAMP_COLOR = '#b7791f';
+const RAIL_RED = '#c0392b';
+const REG_COLOR = '#9ca3af';
+const CAMP_COLOR = '#92400e';
 
 const SKIP_V = new Set(['3,0', '1,10', '1,5', '3,5']); // col,row
 
@@ -94,9 +94,11 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const rail = isRailH(r);
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c+1),gy(r)];
         if (rail) {
-          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke={RAIL_COLOR} strokeWidth={1.5}/>);
-          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_COLOR} strokeWidth={3}/>);
-          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke={RAIL_COLOR} strokeWidth={1.5}/>);
+          // Two rails (top and bottom) with red-white alternating dash pattern
+          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke="white" strokeWidth={3}/>);
+          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke={RAIL_RED} strokeWidth={3} strokeDasharray="10,10"/>);
+          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke="white" strokeWidth={3}/>);
+          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke={RAIL_RED} strokeWidth={3} strokeDasharray="10,10"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }
@@ -108,9 +110,11 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const rail = isRailV(c, r);
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c),gy(r+1)];
         if (rail) {
-          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke={RAIL_COLOR} strokeWidth={1.5}/>);
-          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_COLOR} strokeWidth={3}/>);
-          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke={RAIL_COLOR} strokeWidth={1.5}/>);
+          // Two rails (left and right) with red-white alternating dash pattern
+          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke="white" strokeWidth={3}/>);
+          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke={RAIL_RED} strokeWidth={3} strokeDasharray="10,10"/>);
+          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke="white" strokeWidth={3}/>);
+          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke={RAIL_RED} strokeWidth={3} strokeDasharray="10,10"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }
@@ -135,11 +139,11 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const hq = isHQ(r, c);
 
         if (camp) {
-          els.push(<circle key={`cb-${r}-${c}`} cx={cx} cy={cy} r={22} fill="#1a120a" stroke={CAMP_COLOR} strokeWidth={2}/>);
-          if (!piece) els.push(<text key={`cl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill={CAMP_COLOR} fontSize={10} opacity={0.6}>行营</text>);
+          els.push(<circle key={`cb-${r}-${c}`} cx={cx} cy={cy} r={22} fill="#fef3c7" stroke={CAMP_COLOR} strokeWidth={2}/>);
+          if (!piece) els.push(<text key={`cl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill={CAMP_COLOR} fontSize={10}>行营</text>);
         } else if (hq) {
-          els.push(<rect key={`hb-${r}-${c}`} x={cx-22} y={cy-13} width={44} height={26} rx={5} fill="#2d0000" stroke="#7f1d1d" strokeWidth={1.5}/>);
-          if (!piece) els.push(<text key={`hl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill="#ef4444" fontSize={9}>大本营</text>);
+          els.push(<rect key={`hb-${r}-${c}`} x={cx-22} y={cy-13} width={44} height={26} rx={5} fill="#fee2e2" stroke="#b91c1c" strokeWidth={1.5}/>);
+          if (!piece) els.push(<text key={`hl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill="#b91c1c" fontSize={9}>大本营</text>);
         } else if (!piece) {
           els.push(<circle key={`dot-${r}-${c}`} cx={cx} cy={cy} r={4} fill={REG_COLOR}/>);
         }
@@ -178,11 +182,11 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
 
   return (
     <div className="overflow-auto max-h-screen">
-      <svg width={SVG_W} height={SVG_H} style={{background:'#0f172a', borderRadius:12, display:'block'}}>
+      <svg width={SVG_W} height={SVG_H} style={{background:'white', borderRadius:12, display:'block', border:'1px solid #e5e7eb'}}>
         <line x1={PAD/2} y1={(gy(5)+gy(6))/2} x2={SVG_W-PAD/2} y2={(gy(5)+gy(6))/2}
-          stroke="#7f1d1d" strokeWidth={1} strokeDasharray="6,4" opacity={0.5}/>
+          stroke="#b91c1c" strokeWidth={1} strokeDasharray="6,4" opacity={0.6}/>
         <text x={SVG_W/2} y={(gy(5)+gy(6))/2} textAnchor="middle" dominantBaseline="middle"
-          fill="#7f1d1d" fontSize={11} opacity={0.7} letterSpacing={4}>前线</text>
+          fill="#b91c1c" fontSize={11} opacity={0.8} letterSpacing={4}>前线</text>
         {lines}
         {cells}
       </svg>
