@@ -23,8 +23,24 @@ function generateRoomCode(): string {
 }
 
 app.prepare().then(() => {
-  const httpServer = createServer((req, res) => {
+  const httpServer = createServer(async (req, res) => {
     const parsedUrl = parse(req.url!, true);
+
+    if (req.method === 'POST' && parsedUrl.pathname === '/api/cron/cleanup') {
+      const secret = process.env.CRON_SECRET;
+      if (secret && req.headers['authorization'] !== `Bearer ${secret}`) {
+        res.writeHead(401).end('Unauthorized');
+        return;
+      }
+      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const { count } = await prisma.room.deleteMany({
+        where: { status: 'waiting', createdAt: { lt: cutoff } },
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ deleted: count }));
+      return;
+    }
+
     handle(req, res, parsedUrl);
   });
 
