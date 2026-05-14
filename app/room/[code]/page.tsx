@@ -29,7 +29,7 @@ export default function RoomPage() {
       setRoom(data.room);
       if (data.yourColor) {
         setMyColor(data.yourColor);
-        setMessage(data.yourColor === 'red' ? '你是红方' : '你是黑方');
+        setMessage('');
       } else if (data.room.status === 'playing') {
         setMessage('翻开棋子，确定阵营！');
       } else {
@@ -47,7 +47,7 @@ export default function RoomPage() {
       if (!myId) return;
       const color: Color = data.red === myId ? 'red' : 'black';
       setMyColor(color);
-      setMessage(color === 'red' ? '你是红方' : '你是黑方');
+      setMessage('');
     });
 
     socket.on('turn_changed', (color) => {
