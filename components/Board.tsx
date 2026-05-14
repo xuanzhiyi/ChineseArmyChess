@@ -208,8 +208,7 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
   const statusTextColor = isMyTurn ? '#422006' : '#cbd5e1';
   const myDotColor = myColor === 'red' ? '#ef4444' : myColor === 'black' ? '#94a3b8' : 'none';
   const myDotStroke = myColor ? myDotColor : '#64748b';
-  const fullBarW = SVG_W - PAD * 2 + 8;
-  const barW = Math.round(fullBarW * 0.8);
+  const barW = CW * 3; // 3 column-widths ≈ 216px, clearly narrower than board
   const barX = Math.round((SVG_W - barW) / 2);
 
   return (
