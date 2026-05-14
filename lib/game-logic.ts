@@ -123,30 +123,22 @@ export function getValidMoves(
     }
   }
 
-  // Filter: cannot move to camp if camp is occupied, cannot move to own piece,
-  // cannot move to mine (unless engineer or bomb)
+  // Filter valid destinations
   return unique.filter(([nr, nc]) => {
     if (nr === row && nc === col) return false;
     const target = board[nr][nc];
     const tp = target.piece;
+
+    // Pieces in camp cannot be attacked
+    if (tp && isCamp(nr, nc)) return false;
 
     if (!tp) return true; // empty cell, always ok
 
     // Cannot move onto own piece
     if (tp.color === playerColor) return false;
 
-    // Cannot move onto face-down piece (not yet revealed) - it's opponent's unknown
-    // Actually in this game, pieces can be face-down - you can still capture them
-    // But mine blocks movement for non-engineers/bombs
-    if (tp.faceUp && tp.rank === 'mine' && rank !== 'engineer' && rank !== 'bomb') return false;
-    if (!tp.faceUp) {
-      // Face-down pieces: mines block non-engineers. But we don't know the rank.
-      // The rule is: you cannot move onto a mine. Since it's face-down, allow it
-      // and resolve on server when rank is revealed. Actually per rules:
-      // "other pieces cannot land on a mine" - but face-down pieces are unknown.
-      // We'll allow the move and resolve server-side.
-      return true;
-    }
+    // Mine blocks all except engineer and bomb
+    if (tp.rank === 'mine' && rank !== 'engineer' && rank !== 'bomb') return false;
 
     return true;
   });
