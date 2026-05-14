@@ -12,12 +12,18 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState<'create' | 'join' | null>(null);
+  const [myRooms, setMyRooms] = useState<Array<{ code: string; updatedAt: string }>>([]);
 
   useEffect(() => {
     const socket = getSocket();
     socket.on('room_joined', (data) => router.push(`/room/${data.room.code}`));
     socket.on('error', (msg) => { setError(msg); setLoading(null); });
-    return () => { socket.off('room_joined'); socket.off('error'); };
+    socket.on('my_rooms', setMyRooms);
+
+    const token = getPlayerToken();
+    if (token) socket.emit('get_my_rooms', token);
+
+    return () => { socket.off('room_joined'); socket.off('error'); socket.off('my_rooms'); };
   }, [router]);
 
   function handleCreate() {
@@ -76,6 +82,24 @@ export default function Home() {
             {loading === 'join' ? '加入中...' : '加入房间'}
           </button>
         </div>
+
+        {myRooms.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-slate-500 text-xs text-center">未完成的对局</p>
+            {myRooms.map(r => (
+              <button
+                key={r.code}
+                onClick={() => router.push(`/room/${r.code}`)}
+                className="w-full flex items-center justify-between bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 px-4 py-3 rounded-xl transition-colors"
+              >
+                <span className="font-mono tracking-widest text-white">{r.code}</span>
+                <span className="text-slate-500 text-xs">
+                  {new Date(r.updatedAt).toLocaleString('zh-CN', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {error && <p className="text-red-400 text-center text-sm">{error}</p>}
       </div>

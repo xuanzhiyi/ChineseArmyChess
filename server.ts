@@ -289,6 +289,19 @@ app.prepare().then(() => {
       }
     });
 
+    socket.on('get_my_rooms', async (playerToken: string) => {
+      const rooms = await prisma.room.findMany({
+        where: {
+          status: { not: 'finished' },
+          OR: [{ playerRedToken: playerToken }, { playerBlackToken: playerToken }],
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 10,
+        select: { code: true, updatedAt: true },
+      });
+      socket.emit('my_rooms', rooms.map(r => ({ code: r.code, updatedAt: r.updatedAt.toISOString() })));
+    });
+
     socket.on('leave_room', async () => {
       const sr = socketRooms.get(socket.id);
       if (!sr) return;

@@ -96,6 +96,7 @@ export interface ServerToClientEvents {
   game_over: (winner: Color) => void;
   error: (msg: string) => void;
   player_left: () => void;
+  my_rooms: (rooms: Array<{ code: string; updatedAt: string }>) => void;
 }
 
 export interface ClientToServerEvents {
@@ -105,4 +106,5 @@ export interface ClientToServerEvents {
   flip_piece: (row: number, col: number) => void;
   move_piece: (fromRow: number, fromCol: number, toRow: number, toCol: number) => void;
   leave_room: () => void;
+  get_my_rooms: (playerToken: string) => void;
 }
