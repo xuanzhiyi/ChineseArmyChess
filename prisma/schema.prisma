@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id          String     @id @default(cuid())
+  code        String     @unique @db.VarChar(5)
+  status      String     @default("waiting")   // waiting | playing | finished
+  playerRed   String?
+  playerBlack String?
+  currentTurn String?    // "red" | "black"
+  winner      String?    // "red" | "black"
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  gameState   GameState?
+  moves       Move[]
+}
+
+model GameState {
+  id         String   @id @default(cuid())
+  roomId     String   @unique
+  room       Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  board      Json     // 12x5 array of cells
+  redMines   Int      @default(3)
+  blackMines Int      @default(3)
+  phase      String   @default("flipping")  // flipping | playing
+  updatedAt  DateTime @updatedAt
+}
+
+model Move {
+  id        String   @id @default(cuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  moveNum   Int
+  type      String   // "flip" | "move"
+  fromCol   Int?
+  fromRow   Int?
+  toCol     Int?
+  toRow     Int?
+  piece     Json?
+  captured  Json?
+  createdAt DateTime @default(now())
+}
