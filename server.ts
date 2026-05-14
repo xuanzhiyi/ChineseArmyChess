@@ -32,9 +32,15 @@ app.prepare().then(() => {
         res.writeHead(401).end('Unauthorized');
         return;
       }
-      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const waitingCutoff = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      const finishedCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
       const { count } = await prisma.room.deleteMany({
-        where: { status: 'waiting', createdAt: { lt: cutoff } },
+        where: {
+          OR: [
+            { status: 'waiting', createdAt: { lt: waitingCutoff } },
+            { status: 'finished', updatedAt: { lt: finishedCutoff } },
+          ],
+        },
       });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ deleted: count }));
