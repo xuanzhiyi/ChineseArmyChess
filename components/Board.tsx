@@ -198,6 +198,23 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
           stroke="#b91c1c" strokeWidth={1} strokeDasharray="6,4" opacity={0.6}/>
         <text x={SVG_W/2} y={(gy(5)+gy(6))/2} textAnchor="middle" dy="0.35em"
           fill="#b91c1c" fontSize={11} opacity={0.8} letterSpacing={4}>前线</text>
+        {myColor && (
+          <>
+            <circle cx={PAD/2 + 8} cy={(gy(5)+gy(6))/2} r={5}
+              fill={myColor === 'red' ? '#ef4444' : '#94a3b8'}/>
+            <text x={PAD/2 + 18} y={(gy(5)+gy(6))/2} dy="0.35em"
+              fill="#6b7280" fontSize={10}>
+              {myColor === 'red' ? '红方' : '黑方'}
+            </text>
+          </>
+        )}
+        {myColor && (
+          <text x={SVG_W - PAD/2} y={(gy(5)+gy(6))/2} textAnchor="end" dy="0.35em"
+            fontSize={10} fontWeight="bold"
+            fill={isMyTurn ? '#d97706' : '#9ca3af'}>
+            {isMyTurn ? '⚔ 你的回合' : '对方回合'}
+          </text>
+        )}
         {lines}
         {cells}
       </svg>

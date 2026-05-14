@@ -123,26 +123,10 @@ export default function RoomPage() {
         </div>
       </div>
 
-      {/* Status bar */}
-      <div className="w-full max-w-lg flex items-center justify-between bg-slate-800/60 rounded-xl px-4 py-3">
-        <div className="flex items-center gap-2">
-          {myColor && (
-            <span className={`w-3 h-3 rounded-full ${myColor === 'red' ? 'bg-red-500' : 'bg-slate-400'}`} />
-          )}
-          <span className="text-slate-300 text-sm">{message}</span>
-        </div>
-        {currentTurn && (
-          <div className="flex items-center gap-2">
-            <span className={`text-sm font-bold px-3 py-1 rounded-full border-2 ${
-              isMyTurn
-                ? 'bg-yellow-500 text-yellow-950 border-yellow-300 animate-pulse'
-                : 'bg-slate-700 text-slate-400 border-slate-600'
-            }`}>
-              {isMyTurn ? '⚔ 你的回合' : '对方回合'}
-            </span>
-          </div>
-        )}
-      </div>
+      {/* Status message (waiting / errors only) */}
+      {message && (
+        <div className="text-slate-400 text-sm">{message}</div>
+      )}
 
       {/* Mine counters */}
       {gameState && myColor && (
