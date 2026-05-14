@@ -180,7 +180,7 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
                 transform={isSelected ? `translate(${cx*(1-1.1)},${cy*(1-1.1)}) scale(1.1)` : undefined}/>
               <text x={cx} y={cy} textAnchor="middle" dy="0.35em"
                 fill={faceUp ? (isRed ? '#fca5a5' : '#7dd3fc') : '#1c1917'}
-                fontSize={faceUp ? 11 : 14} fontWeight="bold">
+                fontSize={faceUp ? 13 : 14} fontWeight="bold">
                 {faceUp ? RANK_LABELS[piece.rank] : '?'}
               </text>
             </g>
