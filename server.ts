@@ -14,8 +14,8 @@ const prisma = new PrismaClient();
 // In-memory game states keyed by room code for fast access
 const gameStates = new Map<string, GameState & { currentTurn: Color | null; phase: string; lastMove?: LastMove }>();
 
-// Socket id -> { roomCode, color }
-const socketRooms = new Map<string, { roomCode: string; color: Color | null }>();
+// Socket id -> { roomCode, color, playerToken }
+const socketRooms = new Map<string, { roomCode: string; color: Color | null; playerToken: string }>();
 
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -23,8 +23,32 @@ function generateRoomCode(): string {
 }
 
 app.prepare().then(() => {
-  const httpServer = createServer((req, res) => {
+  const httpServer = createServer(async (req, res) => {
     const parsedUrl = parse(req.url!, true);
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/api/cron/cleanup') {
+      const secret = process.env.CRON_SECRET;
+      if (secret && parsedUrl.query['secret'] !== secret) {
+        res.writeHead(401).end('Unauthorized');
+        return;
+      }
+      const waitingCutoff  = new Date(Date.now() -  2 * 60 * 60 * 1000);
+      const finishedCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      const playingCutoff  = new Date(Date.now() -  7 * 24 * 60 * 60 * 1000);
+      const { count } = await prisma.room.deleteMany({
+        where: {
+          OR: [
+            { status: 'waiting',  createdAt: { lt: waitingCutoff } },
+            { status: 'finished', updatedAt: { lt: finishedCutoff } },
+            { status: 'playing',  updatedAt: { lt: playingCutoff } },
+          ],
+        },
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ deleted: count }));
+      return;
+    }
+
     handle(req, res, parsedUrl);
   });
 
@@ -35,7 +59,7 @@ app.prepare().then(() => {
   io.on('connection', (socket) => {
     console.log('connected:', socket.id);
 
-    socket.on('create_room', async () => {
+    socket.on('create_room', async (playerToken: string) => {
       let code = generateRoomCode();
       // Ensure unique
       while (await prisma.room.findUnique({ where: { code } })) {
@@ -46,6 +70,7 @@ app.prepare().then(() => {
         data: {
           code,
           playerRed: socket.id,
+          playerRedToken: playerToken,
           status: 'waiting',
           gameState: {
             create: {
@@ -59,7 +84,7 @@ app.prepare().then(() => {
         include: { gameState: true },
       });
 
-      socketRooms.set(socket.id, { roomCode: code, color: null });
+      socketRooms.set(socket.id, { roomCode: code, color: null, playerToken });
       socket.join(code);
 
       const gs = room.gameState!;
@@ -78,17 +103,17 @@ app.prepare().then(() => {
       });
     });
 
-    socket.on('join_room', async (code: string) => {
+    socket.on('join_room', async (code: string, playerToken: string) => {
       const room = await prisma.room.findUnique({ where: { code: code.toUpperCase() }, include: { gameState: true } });
       if (!room) { socket.emit('error', '房间不存在'); return; }
       if (room.status !== 'waiting') { socket.emit('error', '房间已满或游戏已开始'); return; }
 
       const updated = await prisma.room.update({
         where: { id: room.id },
-        data: { playerBlack: socket.id, status: 'playing', currentTurn: 'red' },
+        data: { playerBlack: socket.id, playerBlackToken: playerToken, status: 'playing', currentTurn: 'red' },
       });
 
-      socketRooms.set(socket.id, { roomCode: code.toUpperCase(), color: null });
+      socketRooms.set(socket.id, { roomCode: code.toUpperCase(), color: null, playerToken });
       socket.join(code.toUpperCase());
 
       const state = gameStates.get(code.toUpperCase());
@@ -140,12 +165,14 @@ app.prepare().then(() => {
         let blackSocketId: string | null = null;
 
         for (const s of sockets) {
+          const existing = socketRooms.get(s.id);
+          const token = existing?.playerToken ?? '';
           if (s.id === socket.id) {
-            socketRooms.set(s.id, { roomCode, color: flippedColor });
+            socketRooms.set(s.id, { roomCode, color: flippedColor, playerToken: token });
             if (flippedColor === 'red') redSocketId = s.id;
             else blackSocketId = s.id;
           } else {
-            socketRooms.set(s.id, { roomCode, color: otherColor });
+            socketRooms.set(s.id, { roomCode, color: otherColor, playerToken: token });
             if (otherColor === 'red') redSocketId = s.id;
             else blackSocketId = s.id;
           }
@@ -181,6 +208,8 @@ app.prepare().then(() => {
           roomId: room.id,
           moveNum: moveCount + 1,
           type: 'flip',
+          playerToken: sr.playerToken,
+          color: state.currentTurn,
           toRow: row,
           toCol: col,
           piece: result.flippedPiece as object,
@@ -223,6 +252,8 @@ app.prepare().then(() => {
           roomId: room.id,
           moveNum: moveCount + 1,
           type: 'move',
+          playerToken: sr.playerToken,
+          color,
           fromRow,
           fromCol,
           toRow,
@@ -255,9 +286,10 @@ app.prepare().then(() => {
 
       // Re-associate socket with room if it's one of the players
       let color: Color | null = null;
-      if (room.playerRed === socket.id) color = 'red';
-      else if (room.playerBlack === socket.id) color = 'black';
-      socketRooms.set(socket.id, { roomCode: upperCode, color });
+      let playerToken = '';
+      if (room.playerRed === socket.id) { color = 'red'; playerToken = room.playerRedToken ?? ''; }
+      else if (room.playerBlack === socket.id) { color = 'black'; playerToken = room.playerBlackToken ?? ''; }
+      socketRooms.set(socket.id, { roomCode: upperCode, color, playerToken });
 
       socket.emit('room_joined', {
         room: {
@@ -281,6 +313,19 @@ app.prepare().then(() => {
           black: room.playerBlack ?? '',
         });
       }
+    });
+
+    socket.on('get_my_rooms', async (playerToken: string) => {
+      const rooms = await prisma.room.findMany({
+        where: {
+          status: { not: 'finished' },
+          OR: [{ playerRedToken: playerToken }, { playerBlackToken: playerToken }],
+        },
+        orderBy: { updatedAt: 'desc' },
+        take: 10,
+        select: { code: true, updatedAt: true },
+      });
+      socket.emit('my_rooms', rooms.map(r => ({ code: r.code, updatedAt: r.updatedAt.toISOString() })));
     });
 
     socket.on('leave_room', async () => {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSocket } from '@/lib/socket-client';
+import { getPlayerToken } from '@/lib/player-token';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChessBoard, faDoorOpen, faDoorClosed, faKey } from '@fortawesome/free-solid-svg-icons';
 
@@ -11,23 +12,31 @@ export default function Home() {
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState<'create' | 'join' | null>(null);
+  const [myRooms, setMyRooms] = useState<Array<{ code: string; updatedAt: string }>>([]);
 
   useEffect(() => {
     const socket = getSocket();
     socket.on('room_joined', (data) => router.push(`/room/${data.room.code}`));
     socket.on('error', (msg) => { setError(msg); setLoading(null); });
-    return () => { socket.off('room_joined'); socket.off('error'); };
+    socket.on('my_rooms', setMyRooms);
+
+    const token = getPlayerToken();
+    const fetchRooms = () => { if (token) socket.emit('get_my_rooms', token); };
+    if (socket.connected) fetchRooms();
+    else socket.once('connect', fetchRooms);
+
+    return () => { socket.off('room_joined'); socket.off('error'); socket.off('my_rooms'); };
   }, [router]);
 
   function handleCreate() {
     setError(''); setLoading('create');
-    getSocket().emit('create_room');
+    getSocket().emit('create_room', getPlayerToken());
   }
 
   function handleJoin() {
     if (joinCode.trim().length !== 5) { setError('请输入5位房间码'); return; }
     setError(''); setLoading('join');
-    getSocket().emit('join_room', joinCode.trim().toUpperCase());
+    getSocket().emit('join_room', joinCode.trim().toUpperCase(), getPlayerToken());
   }
 
   return (
@@ -75,6 +84,24 @@ export default function Home() {
             {loading === 'join' ? '加入中...' : '加入房间'}
           </button>
         </div>
+
+        {myRooms.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-slate-500 text-xs text-center">未完成的对局</p>
+            {myRooms.map(r => (
+              <button
+                key={r.code}
+                onClick={() => router.push(`/room/${r.code}`)}
+                className="w-full flex items-center justify-between bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 px-4 py-3 rounded-xl transition-colors"
+              >
+                <span className="font-mono tracking-widest text-white">{r.code}</span>
+                <span className="text-slate-500 text-xs">
+                  {new Date(r.updatedAt).toLocaleString('zh-CN', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {error && <p className="text-red-400 text-center text-sm">{error}</p>}
       </div>
