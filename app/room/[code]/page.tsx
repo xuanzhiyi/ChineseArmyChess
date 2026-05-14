@@ -44,10 +44,12 @@ export default function RoomPage() {
     });
 
     socket.on('color_assigned', (data) => {
-      const myId = socket.id;
-      if (!myId) return;
-      const color: Color = data.red === myId ? 'red' : 'black';
-      setMyColor(color);
+      setMyColor(prev => {
+        if (prev) return prev; // already known from room_joined (reconnect case)
+        const myId = socket.id;
+        if (!myId) return prev;
+        return data.red === myId ? 'red' : 'black';
+      });
       setMessage('');
     });
 
