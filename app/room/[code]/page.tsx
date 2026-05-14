@@ -110,8 +110,9 @@ export default function RoomPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950 to-slate-900 flex flex-col items-center pt-2 px-3 pb-4 gap-2">
-      {/* Header */}
-      <div className="flex items-center gap-2 self-stretch justify-end">
+      <div className="flex flex-col gap-2 w-fit">
+      {/* Header — right-aligned to game area width */}
+      <div className="flex items-center gap-2 justify-end">
         <button
           onClick={copyCode}
           className="flex items-center gap-2 bg-slate-600 hover:bg-slate-500 text-white px-3 py-1.5 rounded-lg text-sm font-mono tracking-widest transition-colors border border-slate-500"
@@ -161,6 +162,7 @@ export default function RoomPage() {
           加载中...
         </div>
       )}
+      </div>{/* end w-fit wrapper */}
 
       {/* Opponent left overlay */}
       {opponentLeft && !winner && (
