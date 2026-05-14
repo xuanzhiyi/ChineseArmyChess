@@ -61,11 +61,20 @@ export interface Cell {
 // Board is 12 rows x 5 cols, indexed board[row][col] (0-indexed internally)
 export type Board = Cell[][];
 
+export interface LastMove {
+  fromRow: number;
+  fromCol: number;
+  toRow: number;
+  toCol: number;
+  type: 'move' | 'flip';
+}
+
 export interface GameState {
   board: Board;
   phase: Phase;
   redMines: number;
   blackMines: number;
+  lastMove?: LastMove;
 }
 
 export interface Room {
@@ -86,6 +95,7 @@ export interface ServerToClientEvents {
   color_assigned: (data: { red: string; black: string }) => void;
   game_over: (winner: Color) => void;
   error: (msg: string) => void;
+  player_left: () => void;
 }
 
 export interface ClientToServerEvents {
@@ -94,4 +104,5 @@ export interface ClientToServerEvents {
   get_room_state: (code: string) => void;
   flip_piece: (row: number, col: number) => void;
   move_piece: (fromRow: number, fromCol: number, toRow: number, toCol: number) => void;
+  leave_room: () => void;
 }

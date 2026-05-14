@@ -68,29 +68,24 @@ function hasHorizontalConnection(row: number, col: number): boolean {
   return col >= 0 && col < COLS - 1;
 }
 
-// Diagonal connections only through camps (0-indexed)
-// Each camp connects to its 4 diagonal neighbors
-const DIAGONAL_CONNECTIONS: Array<[[number, number], [number, number]]> = [];
+// Diagonal connections only through camps — deduplicated by canonical key
+const _diagSeen = new Set<string>();
+const DIAGONAL_SET = new Set<string>();
 
 for (const pos of CAMP_POSITIONS) {
   const [r, c] = pos.split(',').map(Number);
   for (const [dr, dc] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
     const nr = r + dr, nc = c + dc;
     if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS) {
-      // Avoid duplicates: only add if r < nr, or (r === nr && c < nc)
-      if (r < nr || (r === nr && c < nc)) {
-        DIAGONAL_CONNECTIONS.push([[r, c], [nr, nc]]);
+      const a = `${r},${c}`, b = `${nr},${nc}`;
+      const key = a < b ? `${a}|${b}` : `${b}|${a}`;
+      if (!_diagSeen.has(key)) {
+        _diagSeen.add(key);
+        DIAGONAL_SET.add(key);
       }
     }
   }
 }
-
-const DIAGONAL_SET = new Set(
-  DIAGONAL_CONNECTIONS.map(([[r1, c1], [r2, c2]]) => {
-    const a = `${r1},${c1}`, b = `${r2},${c2}`;
-    return a < b ? `${a}|${b}` : `${b}|${a}`;
-  })
-);
 
 function hasDiagonalConnection(r1: number, c1: number, r2: number, c2: number): boolean {
   const a = `${r1},${c1}`, b = `${r2},${c2}`;

@@ -4,7 +4,7 @@ import next from 'next';
 import { Server } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 import { createInitialBoard, applyFlip, applyMove } from './lib/game-logic';
-import { Color, GameState } from './types/game';
+import { Color, GameState, LastMove } from './types/game';
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -12,7 +12,7 @@ const handle = app.getRequestHandler();
 const prisma = new PrismaClient();
 
 // In-memory game states keyed by room code for fast access
-const gameStates = new Map<string, GameState & { currentTurn: Color | null; phase: string }>();
+const gameStates = new Map<string, GameState & { currentTurn: Color | null; phase: string; lastMove?: LastMove }>();
 
 // Socket id -> { roomCode, color }
 const socketRooms = new Map<string, { roomCode: string; color: Color | null }>();
@@ -152,12 +152,12 @@ app.prepare().then(() => {
         }
 
         state.phase = 'playing';
-        // Turn goes to red first after color assignment
-        state.currentTurn = 'red';
+        // Turn goes to the opponent (not the player who flipped the mine)
+        state.currentTurn = otherColor;
 
         await prisma.room.update({
           where: { code: roomCode },
-          data: { playerRed: redSocketId, playerBlack: blackSocketId, currentTurn: 'red' },
+          data: { playerRed: redSocketId, playerBlack: blackSocketId, currentTurn: otherColor },
         });
         await prisma.gameState.update({
           where: { roomId: room.id },
@@ -187,6 +187,7 @@ app.prepare().then(() => {
         },
       });
 
+      state.lastMove = { fromRow: row, fromCol: col, toRow: row, toCol: col, type: 'flip' };
       io.to(roomCode).emit('game_state', state);
       io.to(roomCode).emit('turn_changed', state.currentTurn!);
     });
@@ -230,6 +231,8 @@ app.prepare().then(() => {
           captured: result.captured as object ?? null,
         },
       });
+
+      state.lastMove = { fromRow, fromCol, toRow, toCol, type: 'move' };
 
       if (result.gameOver && result.winner) {
         await prisma.room.update({ where: { code: roomCode }, data: { status: 'finished', winner: result.winner } });
@@ -278,6 +281,16 @@ app.prepare().then(() => {
           black: room.playerBlack ?? '',
         });
       }
+    });
+
+    socket.on('leave_room', async () => {
+      const sr = socketRooms.get(socket.id);
+      if (!sr) return;
+      const { roomCode } = sr;
+      socket.to(roomCode).emit('player_left');
+      socketRooms.delete(socket.id);
+      socket.leave(roomCode);
+      await prisma.room.update({ where: { code: roomCode }, data: { status: 'finished' } });
     });
 
     socket.on('disconnect', () => {

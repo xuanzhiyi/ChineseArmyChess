@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { Color, GameState, RANK_LABELS } from '@/types/game';
+import { Color, GameState, LastMove, RANK_LABELS } from '@/types/game';
 import { getValidMoves } from '@/lib/game-logic';
 import { isCamp, isHQ, CAMP_POSITIONS } from '@/lib/board-config';
 
@@ -13,9 +13,10 @@ const SVG_H = PAD * 2 + CH * 11 + GAP;
 function gx(col: number) { return PAD + col * CW; }
 function gy(row: number) { return PAD + row * CH + (row >= 6 ? GAP : 0); }
 
-const RAIL_COLOR = '#c0392b';
-const REG_COLOR = '#4a5568';
-const CAMP_COLOR = '#b7791f';
+const RAIL_RED = '#c0392b';
+const RAIL_WHITE = '#e5e7eb';
+const REG_COLOR = '#9ca3af';
+const CAMP_COLOR = '#92400e';
 
 const SKIP_V = new Set(['3,0', '1,10', '1,5', '3,5']); // col,row
 
@@ -48,15 +49,17 @@ interface Props {
   gameState: GameState;
   myColor: Color | null;
   isMyTurn: boolean;
+  currentTurn: Color | null;
   phase: 'flipping' | 'playing';
   onFlip: (row: number, col: number) => void;
   onMove: (fromRow: number, fromCol: number, toRow: number, toCol: number) => void;
 }
 
-export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onMove }: Props) {
+export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase, onFlip, onMove }: Props) {
   const [selected, setSelected] = useState<[number,number] | null>(null);
   const [validMoves, setValidMoves] = useState<Set<string>>(new Set());
   const board = gameState.board;
+  const lastMove: LastMove | undefined = gameState.lastMove;
 
   const handleCellClick = useCallback((row: number, col: number) => {
     if (!isMyTurn) return;
@@ -94,9 +97,9 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const rail = isRailH(r);
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c+1),gy(r)];
         if (rail) {
-          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke={RAIL_COLOR} strokeWidth={1.5}/>);
-          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_COLOR} strokeWidth={3}/>);
-          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke={RAIL_COLOR} strokeWidth={1.5}/>);
+          // Single railway line with alternating red/gray segments
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_WHITE} strokeWidth={10}/>);
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_RED} strokeWidth={10} strokeDasharray="14,14"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }
@@ -108,9 +111,9 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const rail = isRailV(c, r);
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c),gy(r+1)];
         if (rail) {
-          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke={RAIL_COLOR} strokeWidth={1.5}/>);
-          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_COLOR} strokeWidth={3}/>);
-          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke={RAIL_COLOR} strokeWidth={1.5}/>);
+          // Single railway line with alternating red/gray segments
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_WHITE} strokeWidth={10}/>);
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_RED} strokeWidth={10} strokeDasharray="14,14"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }
@@ -133,26 +136,39 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const isValidDest = validMoves.has(`${r},${c}`);
         const camp = isCamp(r, c);
         const hq = isHQ(r, c);
+        const isLastFrom = lastMove && lastMove.type === 'move' && lastMove.fromRow === r && lastMove.fromCol === c;
+        const isLastTo = lastMove && lastMove.toRow === r && lastMove.toCol === c;
+
+        if (isLastFrom) {
+          els.push(<circle key={`lf-${r}-${c}`} cx={cx} cy={cy} r={24} fill="#d1fae5" opacity={0.7}/>);
+        }
+        if (isLastTo) {
+          els.push(<circle key={`lt-${r}-${c}`} cx={cx} cy={cy} r={24} fill="#6ee7b7" opacity={0.6}/>);
+        }
 
         if (camp) {
-          els.push(<circle key={`cb-${r}-${c}`} cx={cx} cy={cy} r={22} fill="#1a120a" stroke={CAMP_COLOR} strokeWidth={2}/>);
-          if (!piece) els.push(<text key={`cl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill={CAMP_COLOR} fontSize={10} opacity={0.6}>行营</text>);
+          els.push(<circle key={`cb-${r}-${c}`} cx={cx} cy={cy} r={22} fill="#fef3c7" stroke={CAMP_COLOR} strokeWidth={2}/>);
+          if (!piece) els.push(<text key={`cl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dy="0.35em" fill={CAMP_COLOR} fontSize={10}>行营</text>);
         } else if (hq) {
-          els.push(<rect key={`hb-${r}-${c}`} x={cx-22} y={cy-13} width={44} height={26} rx={5} fill="#2d0000" stroke="#7f1d1d" strokeWidth={1.5}/>);
-          if (!piece) els.push(<text key={`hl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill="#ef4444" fontSize={9}>大本营</text>);
+          els.push(<rect key={`hb-${r}-${c}`} x={cx-22} y={cy-13} width={44} height={26} rx={5} fill="#fee2e2" stroke="#b91c1c" strokeWidth={1.5}/>);
+          if (!piece) els.push(<text key={`hl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dy="0.35em" fill="#b91c1c" fontSize={9}>大本营</text>);
         } else if (!piece) {
           els.push(<circle key={`dot-${r}-${c}`} cx={cx} cy={cy} r={4} fill={REG_COLOR}/>);
         }
 
         if (isValidDest && !piece) {
-          els.push(<circle key={`vm-${r}-${c}`} cx={cx} cy={cy} r={11} fill="#f6e05e" opacity={0.75} onClick={() => handleCellClick(r,c)} style={{cursor:'pointer'}}/>);
+          els.push(<circle key={`vm-${r}-${c}`} cx={cx} cy={cy} r={20} fill="#f6e05e" opacity={0.55} onClick={() => handleCellClick(r,c)} style={{cursor:'pointer'}}/>);
+          els.push(<circle key={`vms-${r}-${c}`} cx={cx} cy={cy} r={9} fill="#fbbf24" opacity={0.9} onClick={() => handleCellClick(r,c)} style={{cursor:'pointer'}}/>);
+        }
+        if (isValidDest) {
+          els.push(<rect key={`vr-${r}-${c}`} x={cx - CW/2} y={cy - CH/2} width={CW} height={CH} fill="transparent" onClick={() => handleCellClick(r,c)} style={{cursor:'pointer'}}/>);
         }
 
         if (piece) {
           const faceUp = piece.faceUp;
           const isRed = piece.color === 'red';
-          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#1e293b') : '#374151';
-          const pStroke = isSelected ? '#fbbf24' : isValidDest ? '#fbbf24' : faceUp ? (isRed ? '#ef4444' : '#94a3b8') : '#6b7280';
+          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#0c4a6e') : '#d9a406';
+          const pStroke = isSelected ? '#fef08a' : isValidDest ? '#fef08a' : faceUp ? (isRed ? '#ef4444' : '#38bdf8') : '#fef08a';
           const pr = camp ? 19 : 18;
 
           if (isValidDest) {
@@ -162,10 +178,10 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
             <g key={`p-${r}-${c}`} onClick={() => handleCellClick(r,c)} style={{cursor: isMyTurn ? 'pointer' : 'default'}}>
               <circle cx={cx} cy={cy} r={pr} fill={pFill} stroke={pStroke} strokeWidth={isSelected ? 3 : 2}
                 transform={isSelected ? `translate(${cx*(1-1.1)},${cy*(1-1.1)}) scale(1.1)` : undefined}/>
-              <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
-                fill={faceUp ? (isRed ? '#fca5a5' : '#cbd5e1') : '#9ca3af'}
+              <text x={cx} y={cy} textAnchor="middle" dy="0.35em"
+                fill={faceUp ? (isRed ? '#fca5a5' : '#7dd3fc') : '#1c1917'}
                 fontSize={faceUp ? 11 : 14} fontWeight="bold">
-                {faceUp ? RANK_LABELS[piece.rank] : '？'}
+                {faceUp ? RANK_LABELS[piece.rank] : '?'}
               </text>
             </g>
           );
@@ -174,15 +190,44 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
     }
     return els;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [board, selected, validMoves, isMyTurn, myColor]);
+  }, [board, selected, validMoves, isMyTurn, myColor, lastMove]);
+
+  const { redMines, blackMines } = gameState;
+  const myMineCount = myColor === 'red' ? redMines : blackMines;
+  const oppMineCount = myColor === 'red' ? blackMines : redMines;
+  const myMineColor = myColor === 'red' ? '#ef4444' : '#64748b';
+  const oppMineColor = myColor === 'red' ? '#64748b' : '#ef4444';
+  const mineSpacing = 22;
+  const mineCy = (i: number) => SVG_H / 2 - mineSpacing + i * mineSpacing;
 
   return (
     <div className="overflow-auto max-h-screen">
-      <svg width={SVG_W} height={SVG_H} style={{background:'#0f172a', borderRadius:12, display:'block'}}>
-        <line x1={PAD/2} y1={(gy(5)+gy(6))/2} x2={SVG_W-PAD/2} y2={(gy(5)+gy(6))/2}
-          stroke="#7f1d1d" strokeWidth={1} strokeDasharray="6,4" opacity={0.5}/>
-        <text x={SVG_W/2} y={(gy(5)+gy(6))/2} textAnchor="middle" dominantBaseline="middle"
-          fill="#7f1d1d" fontSize={11} opacity={0.7} letterSpacing={4}>前线</text>
+      <svg width={SVG_W} height={SVG_H} style={{background:'white', borderRadius:12, display:'block', border:'1px solid #e5e7eb'}}>
+        <>
+          <circle cx={PAD/2 + 8 + 230} cy={(gy(5)+gy(6))/2} r={5}
+            fill={myColor === 'red' ? '#ef4444' : myColor === 'black' ? '#94a3b8' : 'none'}
+            stroke={myColor ? 'none' : '#9ca3af'} strokeWidth={1.5}/>
+          <text x={PAD/2 + 18 + 230} y={(gy(5)+gy(6))/2} dy="0.35em"
+            fill="#6b7280" fontSize={10}>
+            {myColor === 'red' ? '红方' : myColor === 'black' ? '黑方' : '颜色未知'}
+          </text>
+        </>
+        <text x={SVG_W - PAD/2 - 230} y={(gy(5)+gy(6))/2} textAnchor="end" dy="0.35em"
+          fontSize={10} fontWeight="bold"
+          fill={isMyTurn ? '#d97706' : '#9ca3af'}>
+          {!currentTurn ? '等待玩家' : isMyTurn ? '⚔ 你的回合' : '对方回合'}
+        </text>
+        {/* Mine indicators — left column: opponent mines, right column: my mines */}
+        {myColor && [0,1,2].map(i => (
+          <circle key={`opp-mine-${i}`} cx={PAD/2} cy={mineCy(i)} r={7}
+            fill={i < oppMineCount ? oppMineColor : 'none'}
+            stroke={oppMineColor} strokeWidth={2}/>
+        ))}
+        {myColor && [0,1,2].map(i => (
+          <circle key={`my-mine-${i}`} cx={SVG_W - PAD/2} cy={mineCy(i)} r={7}
+            fill={i < myMineCount ? myMineColor : 'none'}
+            stroke={myMineColor} strokeWidth={2}/>
+        ))}
         {lines}
         {cells}
       </svg>

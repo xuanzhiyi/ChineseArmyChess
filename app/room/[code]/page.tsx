@@ -6,7 +6,7 @@ import { getSocket } from '@/lib/socket-client';
 import { Color, GameState, Room } from '@/types/game';
 import Board from '@/components/Board';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faCheck, faStar, faSkull } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faCheck, faStar, faSkull, faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 
 export default function RoomPage() {
   const { code } = useParams<{ code: string }>();
@@ -16,6 +16,7 @@ export default function RoomPage() {
   const [currentTurn, setCurrentTurn] = useState<Color | null>(null);
   const [winner, setWinner] = useState<Color | null>(null);
   const [copied, setCopied] = useState(false);
+  const [opponentLeft, setOpponentLeft] = useState(false);
   const [message, setMessage] = useState('等待对手加入...');
 
   const socket = getSocket();
@@ -28,7 +29,7 @@ export default function RoomPage() {
       setRoom(data.room);
       if (data.yourColor) {
         setMyColor(data.yourColor);
-        setMessage(data.yourColor === 'red' ? '你是红方' : '你是黑方');
+        setMessage('');
       } else if (data.room.status === 'playing') {
         setMessage('翻开棋子，确定阵营！');
       } else {
@@ -46,7 +47,7 @@ export default function RoomPage() {
       if (!myId) return;
       const color: Color = data.red === myId ? 'red' : 'black';
       setMyColor(color);
-      setMessage(color === 'red' ? '你是红方' : '你是黑方');
+      setMessage('');
     });
 
     socket.on('turn_changed', (color) => {
@@ -55,6 +56,10 @@ export default function RoomPage() {
 
     socket.on('game_over', (winnerColor) => {
       setWinner(winnerColor);
+    });
+
+    socket.on('player_left', () => {
+      setOpponentLeft(true);
     });
 
     socket.on('error', (msg) => {
@@ -69,6 +74,7 @@ export default function RoomPage() {
       socket.off('turn_changed');
       socket.off('game_over');
       socket.off('error');
+      socket.off('player_left');
     };
   }, [socket]);
 
@@ -76,6 +82,11 @@ export default function RoomPage() {
     navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleLeaveRoom() {
+    socket.emit('leave_room');
+    window.location.href = '/';
   }
 
   function handleFlip(row: number, col: number) {
@@ -92,43 +103,30 @@ export default function RoomPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950 to-slate-900 flex flex-col items-center p-4 gap-4">
       {/* Header */}
-      <div className="w-full max-w-lg flex items-center justify-between">
-        <h1 className="text-white font-bold text-xl tracking-widest">军棋</h1>
-        <button
-          onClick={copyCode}
-          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm transition-colors"
-        >
-          <FontAwesomeIcon icon={copied ? faCheck : faCopy} className={copied ? 'text-green-400' : ''} />
-          <span className="font-mono tracking-widest">{code}</span>
-        </button>
-      </div>
-
-      {/* Status bar */}
-      <div className="w-full max-w-lg flex items-center justify-between bg-slate-800/60 rounded-xl px-4 py-3">
+      <div className="w-full max-w-lg flex items-center justify-end">
         <div className="flex items-center gap-2">
-          {myColor && (
-            <span className={`w-3 h-3 rounded-full ${myColor === 'red' ? 'bg-red-500' : 'bg-slate-400'}`} />
-          )}
-          <span className="text-slate-300 text-sm">{message}</span>
+          <button
+            onClick={copyCode}
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm transition-colors"
+          >
+            <FontAwesomeIcon icon={copied ? faCheck : faCopy} className={copied ? 'text-green-400' : ''} />
+            <span className="font-mono tracking-widest">{code}</span>
+          </button>
+          <button
+            onClick={handleLeaveRoom}
+            className="flex items-center gap-2 bg-slate-800 hover:bg-red-900 text-slate-300 hover:text-red-300 px-3 py-2 rounded-lg text-sm transition-colors"
+            title="离开房间"
+          >
+            <FontAwesomeIcon icon={faRightFromBracket} />
+          </button>
         </div>
-        {currentTurn && (
-          <div className="flex items-center gap-2">
-            <span className={`text-xs px-2 py-1 rounded-full ${
-              isMyTurn ? 'bg-yellow-600 text-yellow-100' : 'bg-slate-700 text-slate-400'
-            }`}>
-              {isMyTurn ? '你的回合' : '对方回合'}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Mine counters */}
-      {gameState && myColor && (
-        <div className="w-full max-w-lg flex justify-between text-xs text-slate-400 px-1">
-          <span>对方地雷: {'💣'.repeat(myColor === 'red' ? gameState.blackMines : gameState.redMines)}</span>
-          <span>我方地雷: {'💣'.repeat(myColor === 'red' ? gameState.redMines : gameState.blackMines)}</span>
-        </div>
+      {/* Status message (waiting / errors only) */}
+      {message && (
+        <div className="text-slate-400 text-sm">{message}</div>
       )}
+
 
       {/* Board */}
       {gameState ? (
@@ -137,6 +135,7 @@ export default function RoomPage() {
             gameState={gameState}
             myColor={myColor}
             isMyTurn={isMyTurn}
+            currentTurn={currentTurn}
             phase={phase as 'flipping' | 'playing'}
             onFlip={handleFlip}
             onMove={handleMove}
@@ -145,6 +144,22 @@ export default function RoomPage() {
       ) : (
         <div className="flex-1 flex items-center justify-center text-slate-500">
           加载中...
+        </div>
+      )}
+
+      {/* Opponent left overlay */}
+      {opponentLeft && !winner && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-2xl p-8 text-center space-y-4 border border-slate-600">
+            <FontAwesomeIcon icon={faRightFromBracket} className="text-5xl text-slate-400" />
+            <h2 className="text-2xl font-bold text-white">对方已离开房间</h2>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="bg-red-700 hover:bg-red-600 text-white px-6 py-2 rounded-xl transition-colors"
+            >
+              返回首页
+            </button>
+          </div>
         </div>
       )}
 
