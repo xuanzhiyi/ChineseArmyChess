@@ -21,10 +21,20 @@ export default function RoomPage() {
   const socket = getSocket();
 
   useEffect(() => {
+    // Request current state on mount (handles page refresh and player 2 redirect)
+    socket.emit('get_room_state', code);
+
     socket.on('room_joined', (data) => {
       setRoom(data.room);
-      if (data.room.status === 'playing') setMessage('翻开棋子，确定阵营！');
-      else setMessage('等待对手加入...');
+      if (data.yourColor) {
+        setMyColor(data.yourColor);
+        setMessage(data.yourColor === 'red' ? '你是红方' : '你是黑方');
+      } else if (data.room.status === 'playing') {
+        setMessage('翻开棋子，确定阵营！');
+      } else {
+        setMessage('等待对手加入...');
+      }
+      if (data.room.currentTurn) setCurrentTurn(data.room.currentTurn);
     });
 
     socket.on('game_state', (state) => {
@@ -33,6 +43,7 @@ export default function RoomPage() {
 
     socket.on('color_assigned', (data) => {
       const myId = socket.id;
+      if (!myId) return;
       const color: Color = data.red === myId ? 'red' : 'black';
       setMyColor(color);
       setMessage(color === 'red' ? '你是红方' : '你是黑方');

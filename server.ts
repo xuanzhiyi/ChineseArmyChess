@@ -243,6 +243,43 @@ app.prepare().then(() => {
       io.to(roomCode).emit('turn_changed', state.currentTurn);
     });
 
+    socket.on('get_room_state', async (code: string) => {
+      const upperCode = code.toUpperCase();
+      const room = await prisma.room.findUnique({ where: { code: upperCode } });
+      if (!room) { socket.emit('error', '房间不存在'); return; }
+
+      socket.join(upperCode);
+
+      // Re-associate socket with room if it's one of the players
+      let color: Color | null = null;
+      if (room.playerRed === socket.id) color = 'red';
+      else if (room.playerBlack === socket.id) color = 'black';
+      socketRooms.set(socket.id, { roomCode: upperCode, color });
+
+      socket.emit('room_joined', {
+        room: {
+          id: room.id, code: upperCode, status: room.status,
+          playerRed: room.playerRed, playerBlack: room.playerBlack,
+          currentTurn: room.currentTurn as Color | null,
+          winner: room.winner as Color | null,
+        },
+        yourColor: color,
+      });
+
+      const state = gameStates.get(upperCode);
+      if (state) {
+        socket.emit('game_state', state);
+        if (state.currentTurn) socket.emit('turn_changed', state.currentTurn);
+      }
+
+      if (color) {
+        socket.emit('color_assigned', {
+          red: room.playerRed ?? '',
+          black: room.playerBlack ?? '',
+        });
+      }
+    });
+
     socket.on('disconnect', () => {
       socketRooms.delete(socket.id);
       console.log('disconnected:', socket.id);
