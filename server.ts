@@ -14,8 +14,8 @@ const prisma = new PrismaClient();
 // In-memory game states keyed by room code for fast access
 const gameStates = new Map<string, GameState & { currentTurn: Color | null; phase: string; lastMove?: LastMove }>();
 
-// Socket id -> { roomCode, color }
-const socketRooms = new Map<string, { roomCode: string; color: Color | null }>();
+// Socket id -> { roomCode, color, playerToken }
+const socketRooms = new Map<string, { roomCode: string; color: Color | null; playerToken: string }>();
 
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -35,7 +35,7 @@ app.prepare().then(() => {
   io.on('connection', (socket) => {
     console.log('connected:', socket.id);
 
-    socket.on('create_room', async () => {
+    socket.on('create_room', async (playerToken: string) => {
       let code = generateRoomCode();
       // Ensure unique
       while (await prisma.room.findUnique({ where: { code } })) {
@@ -46,6 +46,7 @@ app.prepare().then(() => {
         data: {
           code,
           playerRed: socket.id,
+          playerRedToken: playerToken,
           status: 'waiting',
           gameState: {
             create: {
@@ -59,7 +60,7 @@ app.prepare().then(() => {
         include: { gameState: true },
       });
 
-      socketRooms.set(socket.id, { roomCode: code, color: null });
+      socketRooms.set(socket.id, { roomCode: code, color: null, playerToken });
       socket.join(code);
 
       const gs = room.gameState!;
@@ -78,17 +79,17 @@ app.prepare().then(() => {
       });
     });
 
-    socket.on('join_room', async (code: string) => {
+    socket.on('join_room', async (code: string, playerToken: string) => {
       const room = await prisma.room.findUnique({ where: { code: code.toUpperCase() }, include: { gameState: true } });
       if (!room) { socket.emit('error', '房间不存在'); return; }
       if (room.status !== 'waiting') { socket.emit('error', '房间已满或游戏已开始'); return; }
 
       const updated = await prisma.room.update({
         where: { id: room.id },
-        data: { playerBlack: socket.id, status: 'playing', currentTurn: 'red' },
+        data: { playerBlack: socket.id, playerBlackToken: playerToken, status: 'playing', currentTurn: 'red' },
       });
 
-      socketRooms.set(socket.id, { roomCode: code.toUpperCase(), color: null });
+      socketRooms.set(socket.id, { roomCode: code.toUpperCase(), color: null, playerToken });
       socket.join(code.toUpperCase());
 
       const state = gameStates.get(code.toUpperCase());
@@ -181,6 +182,8 @@ app.prepare().then(() => {
           roomId: room.id,
           moveNum: moveCount + 1,
           type: 'flip',
+          playerToken: sr.playerToken,
+          color: state.currentTurn,
           toRow: row,
           toCol: col,
           piece: result.flippedPiece as object,
@@ -223,6 +226,8 @@ app.prepare().then(() => {
           roomId: room.id,
           moveNum: moveCount + 1,
           type: 'move',
+          playerToken: sr.playerToken,
+          color,
           fromRow,
           fromCol,
           toRow,
@@ -255,9 +260,10 @@ app.prepare().then(() => {
 
       // Re-associate socket with room if it's one of the players
       let color: Color | null = null;
-      if (room.playerRed === socket.id) color = 'red';
-      else if (room.playerBlack === socket.id) color = 'black';
-      socketRooms.set(socket.id, { roomCode: upperCode, color });
+      let playerToken = '';
+      if (room.playerRed === socket.id) { color = 'red'; playerToken = room.playerRedToken ?? ''; }
+      else if (room.playerBlack === socket.id) { color = 'black'; playerToken = room.playerBlackToken ?? ''; }
+      socketRooms.set(socket.id, { roomCode: upperCode, color, playerToken });
 
       socket.emit('room_joined', {
         room: {

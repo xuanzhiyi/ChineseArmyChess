@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSocket } from '@/lib/socket-client';
+import { getPlayerToken } from '@/lib/player-token';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChessBoard, faDoorOpen, faDoorClosed, faKey } from '@fortawesome/free-solid-svg-icons';
 
@@ -21,13 +22,13 @@ export default function Home() {
 
   function handleCreate() {
     setError(''); setLoading('create');
-    getSocket().emit('create_room');
+    getSocket().emit('create_room', getPlayerToken());
   }
 
   function handleJoin() {
     if (joinCode.trim().length !== 5) { setError('请输入5位房间码'); return; }
     setError(''); setLoading('join');
-    getSocket().emit('join_room', joinCode.trim().toUpperCase());
+    getSocket().emit('join_room', joinCode.trim().toUpperCase(), getPlayerToken());
   }
 
   return (
