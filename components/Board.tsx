@@ -200,23 +200,25 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
   const mineSpacing = 22;
   const mineCy = (i: number) => SVG_H / 2 - mineSpacing + i * mineSpacing;
 
+  const turnLabel = !currentTurn ? '等待对手加入' : isMyTurn ? '你的回合' : '对方回合';
+  const colorLabel = myColor === 'red' ? '红方' : myColor === 'black' ? '黑方' : '颜色未知';
+  const colorDot = myColor === 'red' ? 'bg-red-500' : myColor === 'black' ? 'bg-slate-400' : 'bg-transparent border border-slate-500';
+
   return (
-    <div className="overflow-auto max-h-screen">
+    <div className="flex flex-col gap-2">
+      {/* Status bar */}
+      <div className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold ${
+        isMyTurn ? 'bg-yellow-500 text-yellow-950' : 'bg-slate-700 text-slate-300'
+      } ${isMyTurn ? 'animate-pulse' : ''}`}>
+        <div className="flex items-center gap-2">
+          <span className={`w-3 h-3 rounded-full ${colorDot}`}/>
+          <span>{colorLabel}</span>
+        </div>
+        <span className="text-base">{isMyTurn ? '⚔ ' : ''}{turnLabel}</span>
+      </div>
+
+      <div className="overflow-auto">
       <svg width={SVG_W} height={SVG_H} style={{background:'white', borderRadius:12, display:'block', border:'1px solid #e5e7eb'}}>
-        <>
-          <circle cx={PAD/2 + 8 + 230} cy={(gy(5)+gy(6))/2} r={5}
-            fill={myColor === 'red' ? '#ef4444' : myColor === 'black' ? '#94a3b8' : 'none'}
-            stroke={myColor ? 'none' : '#9ca3af'} strokeWidth={1.5}/>
-          <text x={PAD/2 + 18 + 230} y={(gy(5)+gy(6))/2} dy="0.35em"
-            fill="#6b7280" fontSize={10}>
-            {myColor === 'red' ? '红方' : myColor === 'black' ? '黑方' : '颜色未知'}
-          </text>
-        </>
-        <text x={SVG_W - PAD/2 - 230} y={(gy(5)+gy(6))/2} textAnchor="end" dy="0.35em"
-          fontSize={10} fontWeight="bold"
-          fill={isMyTurn ? '#d97706' : '#9ca3af'}>
-          {!currentTurn ? '等待玩家' : isMyTurn ? '⚔ 你的回合' : '对方回合'}
-        </text>
         {/* Mine indicators — left column: opponent mines, right column: my mines */}
         {myColor && [0,1,2].map(i => (
           <circle key={`opp-mine-${i}`} cx={PAD/2} cy={mineCy(i)} r={7}
@@ -231,6 +233,7 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
         {lines}
         {cells}
       </svg>
+      </div>
     </div>
   );
 }

@@ -102,7 +102,7 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   create_room: (playerToken: string) => void;
   join_room: (code: string, playerToken: string) => void;
-  get_room_state: (code: string) => void;
+  get_room_state: (code: string, playerToken?: string) => void;
   flip_piece: (row: number, col: number) => void;
   move_piece: (fromRow: number, fromCol: number, toRow: number, toCol: number) => void;
   leave_room: () => void;

@@ -277,18 +277,34 @@ app.prepare().then(() => {
       io.to(roomCode).emit('turn_changed', state.currentTurn);
     });
 
-    socket.on('get_room_state', async (code: string) => {
+    socket.on('get_room_state', async (code: string, clientToken?: string) => {
       const upperCode = code.toUpperCase();
       const room = await prisma.room.findUnique({ where: { code: upperCode } });
       if (!room) { socket.emit('error', '房间不存在'); return; }
 
       socket.join(upperCode);
 
-      // Re-associate socket with room if it's one of the players
+      // Match player by token (handles reconnection with new socket ID)
       let color: Color | null = null;
       let playerToken = '';
-      if (room.playerRed === socket.id) { color = 'red'; playerToken = room.playerRedToken ?? ''; }
-      else if (room.playerBlack === socket.id) { color = 'black'; playerToken = room.playerBlackToken ?? ''; }
+
+      if (clientToken && room.playerRedToken === clientToken) {
+        color = 'red'; playerToken = clientToken;
+      } else if (clientToken && room.playerBlackToken === clientToken) {
+        color = 'black'; playerToken = clientToken;
+      } else if (room.playerRed === socket.id) {
+        color = 'red'; playerToken = room.playerRedToken ?? '';
+      } else if (room.playerBlack === socket.id) {
+        color = 'black'; playerToken = room.playerBlackToken ?? '';
+      }
+
+      // Update socket ID in DB so future moves are attributed correctly
+      if (color === 'red' && room.playerRed !== socket.id) {
+        await prisma.room.update({ where: { code: upperCode }, data: { playerRed: socket.id } });
+      } else if (color === 'black' && room.playerBlack !== socket.id) {
+        await prisma.room.update({ where: { code: upperCode }, data: { playerBlack: socket.id } });
+      }
+
       socketRooms.set(socket.id, { roomCode: upperCode, color, playerToken });
 
       socket.emit('room_joined', {
@@ -301,7 +317,21 @@ app.prepare().then(() => {
         yourColor: color,
       });
 
-      const state = gameStates.get(upperCode);
+      let state = gameStates.get(upperCode);
+      if (!state) {
+        // Reload from DB after server restart
+        const gs = await prisma.gameState.findUnique({ where: { roomId: room.id } });
+        if (gs) {
+          state = {
+            board: gs.board as unknown as GameState['board'],
+            redMines: gs.redMines,
+            blackMines: gs.blackMines,
+            phase: gs.phase as 'flipping' | 'playing',
+            currentTurn: room.currentTurn as Color | null,
+          };
+          gameStates.set(upperCode, state);
+        }
+      }
       if (state) {
         socket.emit('game_state', state);
         if (state.currentTurn) socket.emit('turn_changed', state.currentTurn);

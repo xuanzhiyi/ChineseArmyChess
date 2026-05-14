@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getSocket } from '@/lib/socket-client';
+import { getPlayerToken } from '@/lib/player-token';
 import { Color, GameState, Room } from '@/types/game';
 import Board from '@/components/Board';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -23,7 +24,7 @@ export default function RoomPage() {
 
   useEffect(() => {
     // Request current state on mount (handles page refresh and player 2 redirect)
-    socket.emit('get_room_state', code);
+    socket.emit('get_room_state', code, getPlayerToken());
 
     socket.on('room_joined', (data) => {
       setRoom(data.room);
