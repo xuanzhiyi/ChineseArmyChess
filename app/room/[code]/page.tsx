@@ -6,7 +6,7 @@ import { getSocket } from '@/lib/socket-client';
 import { Color, GameState, Room } from '@/types/game';
 import Board from '@/components/Board';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faCheck, faStar, faSkull } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faCheck, faStar, faSkull, faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 
 export default function RoomPage() {
   const { code } = useParams<{ code: string }>();
@@ -16,6 +16,7 @@ export default function RoomPage() {
   const [currentTurn, setCurrentTurn] = useState<Color | null>(null);
   const [winner, setWinner] = useState<Color | null>(null);
   const [copied, setCopied] = useState(false);
+  const [opponentLeft, setOpponentLeft] = useState(false);
   const [message, setMessage] = useState('等待对手加入...');
 
   const socket = getSocket();
@@ -57,6 +58,10 @@ export default function RoomPage() {
       setWinner(winnerColor);
     });
 
+    socket.on('player_left', () => {
+      setOpponentLeft(true);
+    });
+
     socket.on('error', (msg) => {
       setMessage(msg);
       setTimeout(() => setMessage(''), 3000);
@@ -69,6 +74,7 @@ export default function RoomPage() {
       socket.off('turn_changed');
       socket.off('game_over');
       socket.off('error');
+      socket.off('player_left');
     };
   }, [socket]);
 
@@ -76,6 +82,11 @@ export default function RoomPage() {
     navigator.clipboard.writeText(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleLeaveRoom() {
+    socket.emit('leave_room');
+    window.location.href = '/';
   }
 
   function handleFlip(row: number, col: number) {
@@ -94,13 +105,22 @@ export default function RoomPage() {
       {/* Header */}
       <div className="w-full max-w-lg flex items-center justify-between">
         <h1 className="text-white font-bold text-xl tracking-widest">军棋</h1>
-        <button
-          onClick={copyCode}
-          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm transition-colors"
-        >
-          <FontAwesomeIcon icon={copied ? faCheck : faCopy} className={copied ? 'text-green-400' : ''} />
-          <span className="font-mono tracking-widest">{code}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={copyCode}
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm transition-colors"
+          >
+            <FontAwesomeIcon icon={copied ? faCheck : faCopy} className={copied ? 'text-green-400' : ''} />
+            <span className="font-mono tracking-widest">{code}</span>
+          </button>
+          <button
+            onClick={handleLeaveRoom}
+            className="flex items-center gap-2 bg-slate-800 hover:bg-red-900 text-slate-300 hover:text-red-300 px-3 py-2 rounded-lg text-sm transition-colors"
+            title="离开房间"
+          >
+            <FontAwesomeIcon icon={faRightFromBracket} />
+          </button>
+        </div>
       </div>
 
       {/* Status bar */}
@@ -145,6 +165,22 @@ export default function RoomPage() {
       ) : (
         <div className="flex-1 flex items-center justify-center text-slate-500">
           加载中...
+        </div>
+      )}
+
+      {/* Opponent left overlay */}
+      {opponentLeft && !winner && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-2xl p-8 text-center space-y-4 border border-slate-600">
+            <FontAwesomeIcon icon={faRightFromBracket} className="text-5xl text-slate-400" />
+            <h2 className="text-2xl font-bold text-white">对方已离开房间</h2>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="bg-red-700 hover:bg-red-600 text-white px-6 py-2 rounded-xl transition-colors"
+            >
+              返回首页
+            </button>
+          </div>
         </div>
       )}
 

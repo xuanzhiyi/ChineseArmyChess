@@ -14,6 +14,7 @@ function gx(col: number) { return PAD + col * CW; }
 function gy(row: number) { return PAD + row * CH + (row >= 6 ? GAP : 0); }
 
 const RAIL_RED = '#c0392b';
+const RAIL_WHITE = '#e5e7eb';
 const REG_COLOR = '#9ca3af';
 const CAMP_COLOR = '#92400e';
 
@@ -94,11 +95,11 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const rail = isRailH(r);
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c+1),gy(r)];
         if (rail) {
-          // Two rails (top and bottom) with red-white alternating dash pattern
-          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke="white" strokeWidth={3}/>);
-          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke={RAIL_RED} strokeWidth={3} strokeDasharray="10,10"/>);
-          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke="white" strokeWidth={3}/>);
-          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke={RAIL_RED} strokeWidth={3} strokeDasharray="10,10"/>);
+          // Two rails (top and bottom) with solid alternating red/white segments
+          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke={RAIL_WHITE} strokeWidth={5}/>);
+          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
+          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke={RAIL_WHITE} strokeWidth={5}/>);
+          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }
@@ -110,11 +111,11 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const rail = isRailV(c, r);
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c),gy(r+1)];
         if (rail) {
-          // Two rails (left and right) with red-white alternating dash pattern
-          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke="white" strokeWidth={3}/>);
-          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke={RAIL_RED} strokeWidth={3} strokeDasharray="10,10"/>);
-          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke="white" strokeWidth={3}/>);
-          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke={RAIL_RED} strokeWidth={3} strokeDasharray="10,10"/>);
+          // Two rails (left and right) with solid alternating red/white segments
+          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke={RAIL_WHITE} strokeWidth={5}/>);
+          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
+          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke={RAIL_WHITE} strokeWidth={5}/>);
+          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }

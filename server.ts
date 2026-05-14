@@ -280,6 +280,16 @@ app.prepare().then(() => {
       }
     });
 
+    socket.on('leave_room', async () => {
+      const sr = socketRooms.get(socket.id);
+      if (!sr) return;
+      const { roomCode } = sr;
+      socket.to(roomCode).emit('player_left');
+      socketRooms.delete(socket.id);
+      socket.leave(roomCode);
+      await prisma.room.update({ where: { code: roomCode }, data: { status: 'finished' } });
+    });
+
     socket.on('disconnect', () => {
       socketRooms.delete(socket.id);
       console.log('disconnected:', socket.id);
