@@ -147,10 +147,10 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
 
         if (camp) {
           els.push(<circle key={`cb-${r}-${c}`} cx={cx} cy={cy} r={22} fill="#fef3c7" stroke={CAMP_COLOR} strokeWidth={2}/>);
-          if (!piece) els.push(<text key={`cl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill={CAMP_COLOR} fontSize={10}>行营</text>);
+          if (!piece) els.push(<text key={`cl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dy="0.35em" fill={CAMP_COLOR} fontSize={10}>行营</text>);
         } else if (hq) {
           els.push(<rect key={`hb-${r}-${c}`} x={cx-22} y={cy-13} width={44} height={26} rx={5} fill="#fee2e2" stroke="#b91c1c" strokeWidth={1.5}/>);
-          if (!piece) els.push(<text key={`hl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fill="#b91c1c" fontSize={9}>大本营</text>);
+          if (!piece) els.push(<text key={`hl-${r}-${c}`} x={cx} y={cy} textAnchor="middle" dy="0.35em" fill="#b91c1c" fontSize={9}>大本营</text>);
         } else if (!piece) {
           els.push(<circle key={`dot-${r}-${c}`} cx={cx} cy={cy} r={4} fill={REG_COLOR}/>);
         }
@@ -177,10 +177,10 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
             <g key={`p-${r}-${c}`} onClick={() => handleCellClick(r,c)} style={{cursor: isMyTurn ? 'pointer' : 'default'}}>
               <circle cx={cx} cy={cy} r={pr} fill={pFill} stroke={pStroke} strokeWidth={isSelected ? 3 : 2}
                 transform={isSelected ? `translate(${cx*(1-1.1)},${cy*(1-1.1)}) scale(1.1)` : undefined}/>
-              <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
+              <text x={cx} y={cy} textAnchor="middle" dy="0.35em"
                 fill={faceUp ? (isRed ? '#fca5a5' : '#7dd3fc') : '#1c1917'}
                 fontSize={faceUp ? 11 : 14} fontWeight="bold">
-                {faceUp ? RANK_LABELS[piece.rank] : '？'}
+                {faceUp ? RANK_LABELS[piece.rank] : '?'}
               </text>
             </g>
           );
@@ -196,7 +196,7 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
       <svg width={SVG_W} height={SVG_H} style={{background:'white', borderRadius:12, display:'block', border:'1px solid #e5e7eb'}}>
         <line x1={PAD/2} y1={(gy(5)+gy(6))/2} x2={SVG_W-PAD/2} y2={(gy(5)+gy(6))/2}
           stroke="#b91c1c" strokeWidth={1} strokeDasharray="6,4" opacity={0.6}/>
-        <text x={SVG_W/2} y={(gy(5)+gy(6))/2} textAnchor="middle" dominantBaseline="middle"
+        <text x={SVG_W/2} y={(gy(5)+gy(6))/2} textAnchor="middle" dy="0.35em"
           fill="#b91c1c" fontSize={11} opacity={0.8} letterSpacing={4}>前线</text>
         {lines}
         {cells}
