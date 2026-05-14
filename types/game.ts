@@ -61,11 +61,20 @@ export interface Cell {
 // Board is 12 rows x 5 cols, indexed board[row][col] (0-indexed internally)
 export type Board = Cell[][];
 
+export interface LastMove {
+  fromRow: number;
+  fromCol: number;
+  toRow: number;
+  toCol: number;
+  type: 'move' | 'flip';
+}
+
 export interface GameState {
   board: Board;
   phase: Phase;
   redMines: number;
   blackMines: number;
+  lastMove?: LastMove;
 }
 
 export interface Room {

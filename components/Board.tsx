@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { Color, GameState, RANK_LABELS } from '@/types/game';
+import { Color, GameState, LastMove, RANK_LABELS } from '@/types/game';
 import { getValidMoves } from '@/lib/game-logic';
 import { isCamp, isHQ, CAMP_POSITIONS } from '@/lib/board-config';
 
@@ -58,6 +58,7 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
   const [selected, setSelected] = useState<[number,number] | null>(null);
   const [validMoves, setValidMoves] = useState<Set<string>>(new Set());
   const board = gameState.board;
+  const lastMove: LastMove | undefined = gameState.lastMove;
 
   const handleCellClick = useCallback((row: number, col: number) => {
     if (!isMyTurn) return;
@@ -134,6 +135,15 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const isValidDest = validMoves.has(`${r},${c}`);
         const camp = isCamp(r, c);
         const hq = isHQ(r, c);
+        const isLastFrom = lastMove && lastMove.type === 'move' && lastMove.fromRow === r && lastMove.fromCol === c;
+        const isLastTo = lastMove && lastMove.toRow === r && lastMove.toCol === c;
+
+        if (isLastFrom) {
+          els.push(<circle key={`lf-${r}-${c}`} cx={cx} cy={cy} r={24} fill="#d1fae5" opacity={0.7}/>);
+        }
+        if (isLastTo) {
+          els.push(<circle key={`lt-${r}-${c}`} cx={cx} cy={cy} r={24} fill="#6ee7b7" opacity={0.6}/>);
+        }
 
         if (camp) {
           els.push(<circle key={`cb-${r}-${c}`} cx={cx} cy={cy} r={22} fill="#fef3c7" stroke={CAMP_COLOR} strokeWidth={2}/>);
@@ -175,7 +185,7 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
     }
     return els;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [board, selected, validMoves, isMyTurn, myColor]);
+  }, [board, selected, validMoves, isMyTurn, myColor, lastMove]);
 
   return (
     <div className="overflow-auto max-h-screen">
