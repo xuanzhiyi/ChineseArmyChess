@@ -204,8 +204,8 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
   const colorLabel = myColor === 'red' ? '我是红方' : myColor === 'black' ? '我是黑方' : '颜色未知';
 
   const gapY = (gy(5) + gy(6)) / 2;
-  const statusBg = isMyTurn ? '#eab308' : '#334155';
-  const statusTextColor = isMyTurn ? '#422006' : '#cbd5e1';
+  const statusBg = isMyTurn ? '#16a34a' : '#334155';
+  const statusTextColor = isMyTurn ? '#f0fdf4' : '#cbd5e1';
   const myDotColor = myColor === 'red' ? '#ef4444' : myColor === 'black' ? '#38bdf8' : 'none';
   const myDotStroke = myColor ? myDotColor : '#64748b';
 
