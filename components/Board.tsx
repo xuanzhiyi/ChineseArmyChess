@@ -204,9 +204,9 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
       <svg width={SVG_W} height={SVG_H} style={{background:'white', borderRadius:12, display:'block', border:'1px solid #e5e7eb'}}>
         {myColor && (
           <>
-            <circle cx={PAD/2 + 8 + 200} cy={(gy(5)+gy(6))/2} r={5}
+            <circle cx={PAD/2 + 8 + 230} cy={(gy(5)+gy(6))/2} r={5}
               fill={myColor === 'red' ? '#ef4444' : '#94a3b8'}/>
-            <text x={PAD/2 + 18 + 200} y={(gy(5)+gy(6))/2} dy="0.35em"
+            <text x={PAD/2 + 18 + 230} y={(gy(5)+gy(6))/2} dy="0.35em"
               fill="#6b7280" fontSize={10}>
               {myColor === 'red' ? '红方' : '黑方'}
             </text>
