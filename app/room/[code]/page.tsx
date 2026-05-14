@@ -133,10 +133,12 @@ export default function RoomPage() {
         </div>
         {currentTurn && (
           <div className="flex items-center gap-2">
-            <span className={`text-xs px-2 py-1 rounded-full ${
-              isMyTurn ? 'bg-yellow-600 text-yellow-100' : 'bg-slate-700 text-slate-400'
+            <span className={`text-sm font-bold px-3 py-1 rounded-full border-2 ${
+              isMyTurn
+                ? 'bg-yellow-500 text-yellow-950 border-yellow-300 animate-pulse'
+                : 'bg-slate-700 text-slate-400 border-slate-600'
             }`}>
-              {isMyTurn ? '你的回合' : '对方回合'}
+              {isMyTurn ? '⚔ 你的回合' : '对方回合'}
             </span>
           </div>
         )}

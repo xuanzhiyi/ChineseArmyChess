@@ -96,8 +96,8 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c+1),gy(r)];
         if (rail) {
           // Single railway line with alternating red/gray segments
-          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_WHITE} strokeWidth={5}/>);
-          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_WHITE} strokeWidth={10}/>);
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_RED} strokeWidth={10} strokeDasharray="14,14"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }
@@ -110,8 +110,8 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c),gy(r+1)];
         if (rail) {
           // Single railway line with alternating red/gray segments
-          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_WHITE} strokeWidth={5}/>);
-          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_WHITE} strokeWidth={10}/>);
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_RED} strokeWidth={10} strokeDasharray="14,14"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }
@@ -152,8 +152,8 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         if (piece) {
           const faceUp = piece.faceUp;
           const isRed = piece.color === 'red';
-          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#0c4a6e') : '#92400e';
-          const pStroke = isSelected ? '#fbbf24' : isValidDest ? '#fbbf24' : faceUp ? (isRed ? '#ef4444' : '#38bdf8') : '#f97316';
+          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#0c4a6e') : '#c2410c';
+          const pStroke = isSelected ? '#fbbf24' : isValidDest ? '#fbbf24' : faceUp ? (isRed ? '#ef4444' : '#38bdf8') : '#fb923c';
           const pr = camp ? 19 : 18;
 
           if (isValidDest) {

@@ -152,12 +152,12 @@ app.prepare().then(() => {
         }
 
         state.phase = 'playing';
-        // Turn goes to red first after color assignment
-        state.currentTurn = 'red';
+        // Turn goes to the opponent (not the player who flipped the mine)
+        state.currentTurn = otherColor;
 
         await prisma.room.update({
           where: { code: roomCode },
-          data: { playerRed: redSocketId, playerBlack: blackSocketId, currentTurn: 'red' },
+          data: { playerRed: redSocketId, playerBlack: blackSocketId, currentTurn: otherColor },
         });
         await prisma.gameState.update({
           where: { roomId: room.id },
