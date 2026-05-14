@@ -141,12 +141,14 @@ app.prepare().then(() => {
         let blackSocketId: string | null = null;
 
         for (const s of sockets) {
+          const existing = socketRooms.get(s.id);
+          const token = existing?.playerToken ?? '';
           if (s.id === socket.id) {
-            socketRooms.set(s.id, { roomCode, color: flippedColor });
+            socketRooms.set(s.id, { roomCode, color: flippedColor, playerToken: token });
             if (flippedColor === 'red') redSocketId = s.id;
             else blackSocketId = s.id;
           } else {
-            socketRooms.set(s.id, { roomCode, color: otherColor });
+            socketRooms.set(s.id, { roomCode, color: otherColor, playerToken: token });
             if (otherColor === 'red') redSocketId = s.id;
             else blackSocketId = s.id;
           }
