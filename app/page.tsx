@@ -21,7 +21,9 @@ export default function Home() {
     socket.on('my_rooms', setMyRooms);
 
     const token = getPlayerToken();
-    if (token) socket.emit('get_my_rooms', token);
+    const fetchRooms = () => { if (token) socket.emit('get_my_rooms', token); };
+    if (socket.connected) fetchRooms();
+    else socket.once('connect', fetchRooms);
 
     return () => { socket.off('room_joined'); socket.off('error'); socket.off('my_rooms'); };
   }, [router]);
