@@ -134,6 +134,9 @@ export function getValidMoves(
 
     if (!tp) return true; // empty cell, always ok
 
+    // Cannot attack face-down pieces
+    if (!tp.faceUp) return false;
+
     // Cannot move onto own piece
     if (tp.color === playerColor) return false;
 

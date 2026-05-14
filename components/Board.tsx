@@ -95,11 +95,9 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const rail = isRailH(r);
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c+1),gy(r)];
         if (rail) {
-          // Two rails (top and bottom) with solid alternating red/white segments
-          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke={RAIL_WHITE} strokeWidth={5}/>);
-          els.push(<line key={k++} x1={x1} y1={y1-5} x2={x2} y2={y2-5} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
-          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke={RAIL_WHITE} strokeWidth={5}/>);
-          els.push(<line key={k++} x1={x1} y1={y1+5} x2={x2} y2={y2+5} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
+          // Single railway line with alternating red/gray segments
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_WHITE} strokeWidth={5}/>);
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }
@@ -111,11 +109,9 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         const rail = isRailV(c, r);
         const [x1,y1,x2,y2] = [gx(c),gy(r),gx(c),gy(r+1)];
         if (rail) {
-          // Two rails (left and right) with solid alternating red/white segments
-          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke={RAIL_WHITE} strokeWidth={5}/>);
-          els.push(<line key={k++} x1={x1-5} y1={y1} x2={x2-5} y2={y2} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
-          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke={RAIL_WHITE} strokeWidth={5}/>);
-          els.push(<line key={k++} x1={x1+5} y1={y1} x2={x2+5} y2={y2} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
+          // Single railway line with alternating red/gray segments
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_WHITE} strokeWidth={5}/>);
+          els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={RAIL_RED} strokeWidth={5} strokeDasharray="12,12"/>);
         } else {
           els.push(<line key={k++} x1={x1} y1={y1} x2={x2} y2={y2} stroke={REG_COLOR} strokeWidth={1.5}/>);
         }
@@ -156,8 +152,8 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         if (piece) {
           const faceUp = piece.faceUp;
           const isRed = piece.color === 'red';
-          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#0c4a6e') : '#374151';
-          const pStroke = isSelected ? '#fbbf24' : isValidDest ? '#fbbf24' : faceUp ? (isRed ? '#ef4444' : '#38bdf8') : '#6b7280';
+          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#0c4a6e') : '#92400e';
+          const pStroke = isSelected ? '#fbbf24' : isValidDest ? '#fbbf24' : faceUp ? (isRed ? '#ef4444' : '#38bdf8') : '#f97316';
           const pr = camp ? 19 : 18;
 
           if (isValidDest) {
@@ -168,7 +164,7 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
               <circle cx={cx} cy={cy} r={pr} fill={pFill} stroke={pStroke} strokeWidth={isSelected ? 3 : 2}
                 transform={isSelected ? `translate(${cx*(1-1.1)},${cy*(1-1.1)}) scale(1.1)` : undefined}/>
               <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
-                fill={faceUp ? (isRed ? '#fca5a5' : '#7dd3fc') : '#9ca3af'}
+                fill={faceUp ? (isRed ? '#fca5a5' : '#7dd3fc') : '#fed7aa'}
                 fontSize={faceUp ? 11 : 14} fontWeight="bold">
                 {faceUp ? RANK_LABELS[piece.rank] : '？'}
               </text>
