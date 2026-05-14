@@ -208,6 +208,8 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
   const statusTextColor = isMyTurn ? '#422006' : '#cbd5e1';
   const myDotColor = myColor === 'red' ? '#ef4444' : myColor === 'black' ? '#94a3b8' : 'none';
   const myDotStroke = myColor ? myDotColor : '#64748b';
+  const barW = CW * 3; // 3 column-widths ≈ 216px, clearly narrower than board
+  const barX = Math.round((SVG_W - barW) / 2);
 
   return (
     <div className="flex flex-col gap-0">
@@ -225,10 +227,10 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
             stroke={myMineColor} strokeWidth={2}/>
         ))}
         {/* Status bar in the gap between rows 5 and 6 */}
-        <rect x={PAD - 4} y={gapY - 14} width={SVG_W - PAD * 2 + 8} height={28} rx={6} fill={statusBg}/>
-        <circle cx={PAD + 10} cy={gapY} r={6} fill={myDotColor} stroke={myDotStroke} strokeWidth={1.5}/>
-        <text x={PAD + 22} y={gapY} textAnchor="start" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{colorLabel}</text>
-        <text x={SVG_W - PAD + 4} y={gapY} textAnchor="end" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{turnLabel}</text>
+        <rect x={barX} y={gapY - 14} width={barW} height={28} rx={6} fill={statusBg}/>
+        <circle cx={barX + 12} cy={gapY} r={6} fill={myDotColor} stroke={myDotStroke} strokeWidth={1.5}/>
+        <text x={barX + 24} y={gapY} textAnchor="start" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{colorLabel}</text>
+        <text x={barX + barW - 8} y={gapY} textAnchor="end" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{turnLabel}</text>
         {lines}
         {cells}
       </svg>
