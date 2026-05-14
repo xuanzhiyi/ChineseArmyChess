@@ -32,13 +32,15 @@ app.prepare().then(() => {
         res.writeHead(401).end('Unauthorized');
         return;
       }
-      const waitingCutoff = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      const waitingCutoff  = new Date(Date.now() -  2 * 60 * 60 * 1000);
       const finishedCutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      const playingCutoff  = new Date(Date.now() -  7 * 24 * 60 * 60 * 1000);
       const { count } = await prisma.room.deleteMany({
         where: {
           OR: [
-            { status: 'waiting', createdAt: { lt: waitingCutoff } },
+            { status: 'waiting',  createdAt: { lt: waitingCutoff } },
             { status: 'finished', updatedAt: { lt: finishedCutoff } },
+            { status: 'playing',  updatedAt: { lt: playingCutoff } },
           ],
         },
       });
