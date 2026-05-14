@@ -213,7 +213,7 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
           </>
         )}
         {myColor && (
-          <text x={SVG_W - PAD/2 - 200} y={(gy(5)+gy(6))/2} textAnchor="end" dy="0.35em"
+          <text x={SVG_W - PAD/2 - 230} y={(gy(5)+gy(6))/2} textAnchor="end" dy="0.35em"
             fontSize={10} fontWeight="bold"
             fill={isMyTurn ? '#d97706' : '#9ca3af'}>
             {isMyTurn ? '⚔ 你的回合' : '对方回合'}
