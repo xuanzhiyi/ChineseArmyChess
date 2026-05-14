@@ -201,7 +201,7 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
   const mineCy = (i: number) => SVG_H / 2 - mineSpacing + i * mineSpacing;
 
   const turnLabel = !currentTurn ? '等待对手加入' : isMyTurn ? '你的回合' : '对方回合';
-  const colorLabel = myColor === 'red' ? '红方' : myColor === 'black' ? '黑方' : '颜色未知';
+  const colorLabel = myColor === 'red' ? '我是红方' : myColor === 'black' ? '我是黑方' : '颜色未知';
 
   const gapY = (gy(5) + gy(6)) / 2;
   const statusBg = isMyTurn ? '#eab308' : '#334155';
