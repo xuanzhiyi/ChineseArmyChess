@@ -26,9 +26,9 @@ app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
     const parsedUrl = parse(req.url!, true);
 
-    if (req.method === 'POST' && parsedUrl.pathname === '/api/cron/cleanup') {
+    if (req.method === 'GET' && parsedUrl.pathname === '/api/cron/cleanup') {
       const secret = process.env.CRON_SECRET;
-      if (secret && req.headers['authorization'] !== `Bearer ${secret}`) {
+      if (secret && parsedUrl.query['secret'] !== secret) {
         res.writeHead(401).end('Unauthorized');
         return;
       }
