@@ -49,12 +49,13 @@ interface Props {
   gameState: GameState;
   myColor: Color | null;
   isMyTurn: boolean;
+  currentTurn: Color | null;
   phase: 'flipping' | 'playing';
   onFlip: (row: number, col: number) => void;
   onMove: (fromRow: number, fromCol: number, toRow: number, toCol: number) => void;
 }
 
-export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onMove }: Props) {
+export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase, onFlip, onMove }: Props) {
   const [selected, setSelected] = useState<[number,number] | null>(null);
   const [validMoves, setValidMoves] = useState<Set<string>>(new Set());
   const board = gameState.board;
@@ -202,23 +203,20 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
   return (
     <div className="overflow-auto max-h-screen">
       <svg width={SVG_W} height={SVG_H} style={{background:'white', borderRadius:12, display:'block', border:'1px solid #e5e7eb'}}>
-        {myColor && (
-          <>
-            <circle cx={PAD/2 + 8 + 230} cy={(gy(5)+gy(6))/2} r={5}
-              fill={myColor === 'red' ? '#ef4444' : '#94a3b8'}/>
-            <text x={PAD/2 + 18 + 230} y={(gy(5)+gy(6))/2} dy="0.35em"
-              fill="#6b7280" fontSize={10}>
-              {myColor === 'red' ? '红方' : '黑方'}
-            </text>
-          </>
-        )}
-        {myColor && (
-          <text x={SVG_W - PAD/2 - 230} y={(gy(5)+gy(6))/2} textAnchor="end" dy="0.35em"
-            fontSize={10} fontWeight="bold"
-            fill={isMyTurn ? '#d97706' : '#9ca3af'}>
-            {isMyTurn ? '⚔ 你的回合' : '对方回合'}
+        <>
+          <circle cx={PAD/2 + 8 + 230} cy={(gy(5)+gy(6))/2} r={5}
+            fill={myColor === 'red' ? '#ef4444' : myColor === 'black' ? '#94a3b8' : 'none'}
+            stroke={myColor ? 'none' : '#9ca3af'} strokeWidth={1.5}/>
+          <text x={PAD/2 + 18 + 230} y={(gy(5)+gy(6))/2} dy="0.35em"
+            fill="#6b7280" fontSize={10}>
+            {myColor === 'red' ? '红方' : myColor === 'black' ? '黑方' : '颜色未知'}
           </text>
-        )}
+        </>
+        <text x={SVG_W - PAD/2 - 230} y={(gy(5)+gy(6))/2} textAnchor="end" dy="0.35em"
+          fontSize={10} fontWeight="bold"
+          fill={isMyTurn ? '#d97706' : '#9ca3af'}>
+          {!currentTurn ? '等待玩家' : isMyTurn ? '⚔ 你的回合' : '对方回合'}
+        </text>
         {/* Mine indicators — left column: opponent mines, right column: my mines */}
         {myColor && [0,1,2].map(i => (
           <circle key={`opp-mine-${i}`} cx={PAD/2} cy={mineCy(i)} r={7}

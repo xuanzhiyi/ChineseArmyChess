@@ -135,6 +135,7 @@ export default function RoomPage() {
             gameState={gameState}
             myColor={myColor}
             isMyTurn={isMyTurn}
+            currentTurn={currentTurn}
             phase={phase as 'flipping' | 'playing'}
             onFlip={handleFlip}
             onMove={handleMove}
