@@ -166,8 +166,8 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         if (piece) {
           const faceUp = piece.faceUp;
           const isRed = piece.color === 'red';
-          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#0c4a6e') : '#c2410c';
-          const pStroke = isSelected ? '#fbbf24' : isValidDest ? '#fbbf24' : faceUp ? (isRed ? '#ef4444' : '#38bdf8') : '#fb923c';
+          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#0c4a6e') : '#92650a';
+          const pStroke = isSelected ? '#fbbf24' : isValidDest ? '#fbbf24' : faceUp ? (isRed ? '#ef4444' : '#38bdf8') : '#fbbf24';
           const pr = camp ? 19 : 18;
 
           if (isValidDest) {
@@ -178,7 +178,7 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
               <circle cx={cx} cy={cy} r={pr} fill={pFill} stroke={pStroke} strokeWidth={isSelected ? 3 : 2}
                 transform={isSelected ? `translate(${cx*(1-1.1)},${cy*(1-1.1)}) scale(1.1)` : undefined}/>
               <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
-                fill={faceUp ? (isRed ? '#fca5a5' : '#7dd3fc') : '#fed7aa'}
+                fill={faceUp ? (isRed ? '#fca5a5' : '#7dd3fc') : '#fef9c3'}
                 fontSize={faceUp ? 11 : 14} fontWeight="bold">
                 {faceUp ? RANK_LABELS[piece.rank] : '？'}
               </text>
