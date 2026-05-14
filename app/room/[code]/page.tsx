@@ -6,7 +6,7 @@ import { getSocket } from '@/lib/socket-client';
 import { Color, GameState, Room } from '@/types/game';
 import Board from '@/components/Board';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faCheck, faStar, faSkull, faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faCheck, faStar, faSkull, faRightFromBracket, faFlag } from '@fortawesome/free-solid-svg-icons';
 
 export default function RoomPage() {
   const { code } = useParams<{ code: string }>();
@@ -89,6 +89,11 @@ export default function RoomPage() {
     window.location.href = '/';
   }
 
+  function handleForfeit() {
+    if (!confirm('确定认输吗？对局将结束。')) return;
+    socket.emit('forfeit');
+  }
+
   function handleFlip(row: number, col: number) {
     socket.emit('flip_piece', row, col);
   }
@@ -112,10 +117,19 @@ export default function RoomPage() {
             <FontAwesomeIcon icon={copied ? faCheck : faCopy} className={copied ? 'text-green-400' : ''} />
             <span className="font-mono tracking-widest">{code}</span>
           </button>
+          {myColor && (
+            <button
+              onClick={handleForfeit}
+              className="flex items-center gap-2 bg-slate-800 hover:bg-red-900 text-slate-300 hover:text-red-300 px-3 py-2 rounded-lg text-sm transition-colors"
+              title="认输"
+            >
+              <FontAwesomeIcon icon={faFlag} />
+            </button>
+          )}
           <button
             onClick={handleLeaveRoom}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-red-900 text-slate-300 hover:text-red-300 px-3 py-2 rounded-lg text-sm transition-colors"
-            title="离开房间"
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm transition-colors"
+            title="保存并离开"
           >
             <FontAwesomeIcon icon={faRightFromBracket} />
           </button>
