@@ -195,8 +195,8 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
   const { redMines, blackMines } = gameState;
   const myMineCount = myColor === 'red' ? redMines : blackMines;
   const oppMineCount = myColor === 'red' ? blackMines : redMines;
-  const myMineColor = myColor === 'red' ? '#ef4444' : '#64748b';
-  const oppMineColor = myColor === 'red' ? '#64748b' : '#ef4444';
+  const myMineColor = myColor === 'red' ? '#ef4444' : '#38bdf8';
+  const oppMineColor = myColor === 'red' ? '#38bdf8' : '#ef4444';
   const mineSpacing = 22;
   const mineCy = (i: number) => SVG_H / 2 - mineSpacing + i * mineSpacing;
 
@@ -206,7 +206,7 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
   const gapY = (gy(5) + gy(6)) / 2;
   const statusBg = isMyTurn ? '#eab308' : '#334155';
   const statusTextColor = isMyTurn ? '#422006' : '#cbd5e1';
-  const myDotColor = myColor === 'red' ? '#ef4444' : myColor === 'black' ? '#94a3b8' : 'none';
+  const myDotColor = myColor === 'red' ? '#ef4444' : myColor === 'black' ? '#38bdf8' : 'none';
   const myDotStroke = myColor ? myDotColor : '#64748b';
 
   return (
