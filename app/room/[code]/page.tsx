@@ -103,8 +103,7 @@ export default function RoomPage() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950 to-slate-900 flex flex-col items-center p-4 gap-4">
       {/* Header */}
-      <div className="w-full max-w-lg flex items-center justify-between">
-        <h1 className="text-white font-bold text-xl tracking-widest">军棋</h1>
+      <div className="w-full max-w-lg flex items-center justify-end">
         <div className="flex items-center gap-2">
           <button
             onClick={copyCode}
@@ -128,13 +127,6 @@ export default function RoomPage() {
         <div className="text-slate-400 text-sm">{message}</div>
       )}
 
-      {/* Mine counters */}
-      {gameState && myColor && (
-        <div className="w-full max-w-lg flex justify-between text-xs text-slate-400 px-1">
-          <span>对方地雷: {'💣'.repeat(myColor === 'red' ? gameState.blackMines : gameState.redMines)}</span>
-          <span>我方地雷: {'💣'.repeat(myColor === 'red' ? gameState.redMines : gameState.blackMines)}</span>
-        </div>
-      )}
 
       {/* Board */}
       {gameState ? (

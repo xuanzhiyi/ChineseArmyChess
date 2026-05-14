@@ -191,6 +191,14 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [board, selected, validMoves, isMyTurn, myColor, lastMove]);
 
+  const { redMines, blackMines } = gameState;
+  const myMineCount = myColor === 'red' ? redMines : blackMines;
+  const oppMineCount = myColor === 'red' ? blackMines : redMines;
+  const myMineColor = myColor === 'red' ? '#ef4444' : '#64748b';
+  const oppMineColor = myColor === 'red' ? '#64748b' : '#ef4444';
+  const mineSpacing = 22;
+  const mineCy = (i: number) => SVG_H / 2 - mineSpacing + i * mineSpacing;
+
   return (
     <div className="overflow-auto max-h-screen">
       <svg width={SVG_W} height={SVG_H} style={{background:'white', borderRadius:12, display:'block', border:'1px solid #e5e7eb'}}>
@@ -215,6 +223,17 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
             {isMyTurn ? '⚔ 你的回合' : '对方回合'}
           </text>
         )}
+        {/* Mine indicators — left column: opponent mines, right column: my mines */}
+        {myColor && [0,1,2].map(i => (
+          <circle key={`opp-mine-${i}`} cx={PAD/2} cy={mineCy(i)} r={7}
+            fill={i < oppMineCount ? oppMineColor : 'none'}
+            stroke={oppMineColor} strokeWidth={2}/>
+        ))}
+        {myColor && [0,1,2].map(i => (
+          <circle key={`my-mine-${i}`} cx={SVG_W - PAD/2} cy={mineCy(i)} r={7}
+            fill={i < myMineCount ? myMineColor : 'none'}
+            stroke={myMineColor} strokeWidth={2}/>
+        ))}
         {lines}
         {cells}
       </svg>
