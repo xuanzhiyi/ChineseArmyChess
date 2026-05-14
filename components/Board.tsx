@@ -225,11 +225,11 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
             stroke={myMineColor} strokeWidth={2}/>
         ))}
         {/* Status: left side — dot + color label, no background */}
-        <circle cx={PAD + 8} cy={gapY} r={6} fill={myDotColor} stroke={myDotStroke} strokeWidth={1.5}/>
-        <text x={PAD + 20} y={gapY} textAnchor="start" dy="0.35em" fill="#475569" fontSize={13} fontWeight="bold">{colorLabel}</text>
+        <circle cx={PAD + 38} cy={gapY} r={6} fill={myDotColor} stroke={myDotStroke} strokeWidth={1.5}/>
+        <text x={PAD + 50} y={gapY} textAnchor="start" dy="0.35em" fill="#475569" fontSize={13} fontWeight="bold">{colorLabel}</text>
         {/* Status: right side — turn label with pill background */}
-        <rect x={SVG_W - PAD - 86} y={gapY - 13} width={86} height={26} rx={13} fill={statusBg}/>
-        <text x={SVG_W - PAD - 43} y={gapY} textAnchor="middle" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{turnLabel}</text>
+        <rect x={SVG_W - PAD - 116} y={gapY - 13} width={86} height={26} rx={13} fill={statusBg}/>
+        <text x={SVG_W - PAD - 73} y={gapY} textAnchor="middle" dy="0.35em" fill={statusTextColor} fontSize={13} fontWeight="bold">{turnLabel}</text>
         {lines}
         {cells}
       </svg>
