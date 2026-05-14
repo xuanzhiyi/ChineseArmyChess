@@ -109,39 +109,37 @@ export default function RoomPage() {
   const phase = gameState?.phase ?? 'flipping';
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950 to-slate-900 flex flex-col items-center p-4 gap-4">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950 to-slate-900 flex flex-col items-center pt-2 px-3 pb-4 gap-2">
       {/* Header */}
-      <div className="w-full max-w-lg flex items-center justify-end">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 self-stretch justify-end">
+        <button
+          onClick={copyCode}
+          className="flex items-center gap-2 bg-slate-600 hover:bg-slate-500 text-white px-3 py-1.5 rounded-lg text-sm font-mono tracking-widest transition-colors border border-slate-500"
+        >
+          <FontAwesomeIcon icon={copied ? faCheck : faCopy} className={copied ? 'text-green-400' : 'text-slate-300'} />
+          {code}
+        </button>
+        {myColor && (
           <button
-            onClick={copyCode}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm transition-colors"
+            onClick={handleForfeit}
+            className="flex items-center gap-2 bg-slate-600 hover:bg-red-700 text-white hover:text-red-200 px-3 py-1.5 rounded-lg text-sm transition-colors border border-slate-500"
+            title="认输"
           >
-            <FontAwesomeIcon icon={copied ? faCheck : faCopy} className={copied ? 'text-green-400' : ''} />
-            <span className="font-mono tracking-widest">{code}</span>
+            <FontAwesomeIcon icon={faFlag} />
           </button>
-          {myColor && (
-            <button
-              onClick={handleForfeit}
-              className="flex items-center gap-2 bg-slate-800 hover:bg-red-900 text-slate-300 hover:text-red-300 px-3 py-2 rounded-lg text-sm transition-colors"
-              title="认输"
-            >
-              <FontAwesomeIcon icon={faFlag} />
-            </button>
-          )}
-          <button
-            onClick={handleLeaveRoom}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg text-sm transition-colors"
-            title="保存并离开"
-          >
-            <FontAwesomeIcon icon={faRightFromBracket} />
-          </button>
-        </div>
+        )}
+        <button
+          onClick={handleLeaveRoom}
+          className="flex items-center gap-2 bg-slate-600 hover:bg-slate-500 text-white px-3 py-1.5 rounded-lg text-sm transition-colors border border-slate-500"
+          title="保存并离开"
+        >
+          <FontAwesomeIcon icon={faRightFromBracket} />
+        </button>
       </div>
 
       {/* Status message (waiting / errors only) */}
       {message && (
-        <div className="text-slate-400 text-sm">{message}</div>
+        <div className="text-slate-300 text-sm">{message}</div>
       )}
 
 
