@@ -143,6 +143,9 @@ export function getValidMoves(
     // Mine blocks all except engineer and bomb (only relevant when face-up)
     if (tp.faceUp && tp.rank === 'mine' && rank !== 'engineer' && rank !== 'bomb') return false;
 
+    // Cannot make a losing attack — only attacker dies (suicide)
+    if (tp.faceUp && resolveBattle(piece, tp) === 'defender_wins') return false;
+
     return true;
   });
 }
