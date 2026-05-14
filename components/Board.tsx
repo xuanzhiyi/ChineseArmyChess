@@ -166,7 +166,7 @@ export default function Board({ gameState, myColor, isMyTurn, phase, onFlip, onM
         if (piece) {
           const faceUp = piece.faceUp;
           const isRed = piece.color === 'red';
-          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#0c4a6e') : '#d97706';
+          const pFill = faceUp ? (isRed ? '#7f1d1d' : '#0c4a6e') : '#d9a406';
           const pStroke = isSelected ? '#fef08a' : isValidDest ? '#fef08a' : faceUp ? (isRed ? '#ef4444' : '#38bdf8') : '#fef08a';
           const pr = camp ? 19 : 18;
 
