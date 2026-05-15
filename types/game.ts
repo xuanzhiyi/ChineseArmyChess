@@ -92,7 +92,7 @@ export interface ServerToClientEvents {
   room_joined: (data: { room: Room; yourColor: Color | null }) => void;
   game_state: (state: GameState) => void;
   turn_changed: (color: Color) => void;
-  color_assigned: (data: { red: string; black: string }) => void;
+  color_assigned: (color: Color) => void;
   game_over: (winner: Color) => void;
   error: (msg: string) => void;
   player_left: () => void;

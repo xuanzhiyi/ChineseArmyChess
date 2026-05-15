@@ -43,13 +43,8 @@ export default function RoomPage() {
       setGameState(state);
     });
 
-    socket.on('color_assigned', (data) => {
-      setMyColor(prev => {
-        if (prev) return prev; // already known from room_joined (reconnect case)
-        const myId = socket.id;
-        if (!myId) return prev;
-        return data.red === myId ? 'red' : 'black';
-      });
+    socket.on('color_assigned', (color: Color) => {
+      setMyColor(color);
       setMessage('');
     });
 

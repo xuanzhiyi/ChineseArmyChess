@@ -159,23 +159,27 @@ app.prepare().then(() => {
         const flippedColor = result.flippedPiece.color;
         const otherColor: Color = flippedColor === 'red' ? 'black' : 'red';
 
-        // Assign colors: current socket gets flippedColor
-        const sockets = await io.in(roomCode).fetchSockets();
+        // Assign colors: current socket gets flippedColor, opponent gets otherColor
+        // Determine socket IDs from in-memory map (more reliable than fetchSockets)
         let redSocketId: string | null = null;
         let blackSocketId: string | null = null;
 
-        for (const s of sockets) {
-          const existing = socketRooms.get(s.id);
-          const token = existing?.playerToken ?? '';
-          if (s.id === socket.id) {
-            socketRooms.set(s.id, { roomCode, color: flippedColor, playerToken: token });
-            if (flippedColor === 'red') redSocketId = s.id;
-            else blackSocketId = s.id;
-          } else {
-            socketRooms.set(s.id, { roomCode, color: otherColor, playerToken: token });
-            if (otherColor === 'red') redSocketId = s.id;
-            else blackSocketId = s.id;
-          }
+        // Update flipper
+        const flipperInfo = socketRooms.get(socket.id);
+        socketRooms.set(socket.id, { roomCode, color: flippedColor, playerToken: flipperInfo?.playerToken ?? '' });
+        if (flippedColor === 'red') redSocketId = socket.id;
+        else blackSocketId = socket.id;
+
+        // Update opponent — find their socket in the room
+        const allSockets = await io.in(roomCode).fetchSockets();
+        for (const s of allSockets) {
+          if (s.id === socket.id) continue;
+          const info = socketRooms.get(s.id);
+          socketRooms.set(s.id, { roomCode, color: otherColor, playerToken: info?.playerToken ?? '' });
+          if (otherColor === 'red') redSocketId = s.id;
+          else blackSocketId = s.id;
+          // Tell opponent their color directly
+          s.emit('color_assigned', otherColor);
         }
 
         state.phase = 'playing';
@@ -191,14 +195,15 @@ app.prepare().then(() => {
           data: { board: state.board as object, phase: 'playing' },
         });
 
-        io.to(roomCode).emit('color_assigned', { red: redSocketId!, black: blackSocketId! });
+        // Tell the flipper their color directly
+        socket.emit('color_assigned', flippedColor);
       } else {
         // Regular flip - switch turn
         state.currentTurn = state.currentTurn === 'red' ? 'black' : 'red';
-        await prisma.gameState.update({
-          where: { roomId: room.id },
-          data: { board: state.board as object },
-        });
+        await Promise.all([
+          prisma.gameState.update({ where: { roomId: room.id }, data: { board: state.board as object } }),
+          prisma.room.update({ where: { code: roomCode }, data: { currentTurn: state.currentTurn } }),
+        ]);
       }
 
       // Log move
@@ -273,6 +278,7 @@ app.prepare().then(() => {
       }
 
       state.currentTurn = color === 'red' ? 'black' : 'red';
+      await prisma.room.update({ where: { code: roomCode }, data: { currentTurn: state.currentTurn } });
       io.to(roomCode).emit('game_state', state);
       io.to(roomCode).emit('turn_changed', state.currentTurn);
     });
@@ -338,9 +344,7 @@ app.prepare().then(() => {
       }
 
       if (color) {
-        const updatedRed = color === 'red' ? socket.id : (room.playerRed ?? '');
-        const updatedBlack = color === 'black' ? socket.id : (room.playerBlack ?? '');
-        socket.emit('color_assigned', { red: updatedRed, black: updatedBlack });
+        socket.emit('color_assigned', color);
       }
     });
 
