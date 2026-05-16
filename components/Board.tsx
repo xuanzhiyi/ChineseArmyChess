@@ -140,10 +140,10 @@ export default function Board({ gameState, myColor, isMyTurn, currentTurn, phase
         const isLastTo = lastMove && lastMove.toRow === r && lastMove.toCol === c;
 
         if (isLastFrom) {
-          els.push(<circle key={`lf-${r}-${c}`} cx={cx} cy={cy} r={24} fill="#d1fae5" opacity={0.7}/>);
+          els.push(<circle key={`lf-${r}-${c}`} cx={cx} cy={cy} r={23} fill="none" stroke="#a855f7" strokeWidth={2.5} strokeDasharray="5,3" opacity={0.9}/>);
         }
         if (isLastTo) {
-          els.push(<circle key={`lt-${r}-${c}`} cx={cx} cy={cy} r={24} fill="#6ee7b7" opacity={0.6}/>);
+          els.push(<circle key={`lt-${r}-${c}`} cx={cx} cy={cy} r={23} fill="#7c3aed" fillOpacity={0.18} stroke="#7c3aed" strokeWidth={3} opacity={1}/>);
         }
 
         if (camp) {
