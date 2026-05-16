@@ -163,21 +163,25 @@ app.prepare().then(() => {
         // Determine socket IDs from in-memory map (more reliable than fetchSockets)
         let redSocketId: string | null = null;
         let blackSocketId: string | null = null;
+        let redPlayerToken: string | null = null;
+        let blackPlayerToken: string | null = null;
 
         // Update flipper
         const flipperInfo = socketRooms.get(socket.id);
-        socketRooms.set(socket.id, { roomCode, color: flippedColor, playerToken: flipperInfo?.playerToken ?? '' });
-        if (flippedColor === 'red') redSocketId = socket.id;
-        else blackSocketId = socket.id;
+        const flipperToken = flipperInfo?.playerToken ?? '';
+        socketRooms.set(socket.id, { roomCode, color: flippedColor, playerToken: flipperToken });
+        if (flippedColor === 'red') { redSocketId = socket.id; redPlayerToken = flipperToken; }
+        else { blackSocketId = socket.id; blackPlayerToken = flipperToken; }
 
         // Update opponent — find their socket in the room
         const allSockets = await io.in(roomCode).fetchSockets();
         for (const s of allSockets) {
           if (s.id === socket.id) continue;
           const info = socketRooms.get(s.id);
-          socketRooms.set(s.id, { roomCode, color: otherColor, playerToken: info?.playerToken ?? '' });
-          if (otherColor === 'red') redSocketId = s.id;
-          else blackSocketId = s.id;
+          const opponentToken = info?.playerToken ?? '';
+          socketRooms.set(s.id, { roomCode, color: otherColor, playerToken: opponentToken });
+          if (otherColor === 'red') { redSocketId = s.id; redPlayerToken = opponentToken; }
+          else { blackSocketId = s.id; blackPlayerToken = opponentToken; }
           // Tell opponent their color directly
           s.emit('color_assigned', otherColor);
         }
@@ -188,7 +192,13 @@ app.prepare().then(() => {
 
         await prisma.room.update({
           where: { code: roomCode },
-          data: { playerRed: redSocketId, playerBlack: blackSocketId, currentTurn: otherColor },
+          data: {
+            playerRed: redSocketId,
+            playerBlack: blackSocketId,
+            playerRedToken: redPlayerToken,
+            playerBlackToken: blackPlayerToken,
+            currentTurn: otherColor,
+          },
         });
         await prisma.gameState.update({
           where: { roomId: room.id },
