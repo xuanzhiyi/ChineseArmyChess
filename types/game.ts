@@ -67,6 +67,7 @@ export interface LastMove {
   toRow: number;
   toCol: number;
   type: 'move' | 'flip';
+  by?: Color; // which color made this move
 }
 
 export interface GameState {
@@ -97,6 +98,8 @@ export interface ServerToClientEvents {
   error: (msg: string) => void;
   player_left: () => void;
   my_rooms: (rooms: Array<{ code: string; updatedAt: string }>) => void;
+  undo_requested: () => void;
+  undo_rejected: () => void;
 }
 
 export interface ClientToServerEvents {
@@ -108,4 +111,6 @@ export interface ClientToServerEvents {
   leave_room: () => void;
   forfeit: () => void;
   get_my_rooms: (playerToken: string) => void;
+  request_undo: () => void;
+  undo_response: (accept: boolean) => void;
 }

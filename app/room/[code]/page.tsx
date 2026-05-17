@@ -7,7 +7,7 @@ import { getPlayerToken } from '@/lib/player-token';
 import { Color, GameState, Room } from '@/types/game';
 import Board from '@/components/Board';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faCheck, faStar, faSkull, faRightFromBracket, faFlag } from '@fortawesome/free-solid-svg-icons';
+import { faCopy, faCheck, faStar, faSkull, faRightFromBracket, faFlag, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
 
 export default function RoomPage() {
   const { code } = useParams<{ code: string }>();
@@ -19,11 +19,12 @@ export default function RoomPage() {
   const [copied, setCopied] = useState(false);
   const [opponentLeft, setOpponentLeft] = useState(false);
   const [message, setMessage] = useState('等待对手加入...');
+  const [undoRequested, setUndoRequested] = useState(false); // opponent is asking us to undo
+  const [undoPending, setUndoPending] = useState(false);     // we sent a request, waiting
 
   const socket = getSocket();
 
   useEffect(() => {
-    // Request current state on mount (handles page refresh and player 2 redirect)
     socket.emit('get_room_state', code, getPlayerToken());
 
     socket.on('room_joined', (data) => {
@@ -60,6 +61,16 @@ export default function RoomPage() {
       setOpponentLeft(true);
     });
 
+    socket.on('undo_requested', () => {
+      setUndoRequested(true);
+    });
+
+    socket.on('undo_rejected', () => {
+      setUndoPending(false);
+      setMessage('对方拒绝了悔棋');
+      setTimeout(() => setMessage(''), 3000);
+    });
+
     socket.on('error', (msg) => {
       setMessage(msg);
       setTimeout(() => setMessage(''), 3000);
@@ -73,6 +84,8 @@ export default function RoomPage() {
       socket.off('game_over');
       socket.off('error');
       socket.off('player_left');
+      socket.off('undo_requested');
+      socket.off('undo_rejected');
     };
   }, [socket]);
 
@@ -100,8 +113,22 @@ export default function RoomPage() {
     socket.emit('move_piece', fromRow, fromCol, toRow, toCol);
   }
 
+  function handleRequestUndo() {
+    setUndoPending(true);
+    socket.emit('request_undo');
+  }
+
+  function handleUndoResponse(accept: boolean) {
+    setUndoRequested(false);
+    socket.emit('undo_response', accept);
+    if (accept) setUndoPending(false);
+  }
+
   const isMyTurn = myColor !== null && currentTurn === myColor;
   const phase = gameState?.phase ?? 'flipping';
+  const lastMove = gameState?.lastMove;
+  // Undo button: only when I just moved (not my turn now) and last move was a piece move
+  const canRequestUndo = !isMyTurn && myColor !== null && lastMove?.type === 'move' && lastMove?.by === myColor && !undoPending;
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950 to-slate-900 flex flex-col items-center pt-2 px-3 pb-4 gap-2">
@@ -135,9 +162,8 @@ export default function RoomPage() {
 
       {/* Status message (waiting / errors only) */}
       {message && (
-        <div className="text-slate-300 text-sm">{message}</div>
+        <div className="text-slate-300 text-sm text-center">{message}</div>
       )}
-
 
       {/* Board */}
       {gameState ? (
@@ -157,7 +183,51 @@ export default function RoomPage() {
           加载中...
         </div>
       )}
+
+      {/* Undo button — below the board */}
+      {myColor && phase === 'playing' && (
+        <div className="flex justify-center">
+          <button
+            onClick={handleRequestUndo}
+            disabled={!canRequestUndo}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-colors border
+              disabled:opacity-30 disabled:cursor-not-allowed
+              enabled:bg-slate-600 enabled:hover:bg-slate-500 enabled:border-slate-500 enabled:text-white
+              disabled:bg-slate-800 disabled:border-slate-700 disabled:text-slate-500"
+            title={lastMove?.type === 'flip' ? '翻棋不可悔棋' : undoPending ? '等待对方回应' : '申请悔棋'}
+          >
+            <FontAwesomeIcon icon={faRotateLeft} />
+            {undoPending ? '等待对方...' : '悔棋'}
+          </button>
+        </div>
+      )}
+
       </div>{/* end w-fit wrapper */}
+
+      {/* Opponent undo request dialog */}
+      {undoRequested && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-slate-800 rounded-2xl p-8 text-center space-y-4 border border-slate-600">
+            <FontAwesomeIcon icon={faRotateLeft} className="text-4xl text-slate-300" />
+            <h2 className="text-xl font-bold text-white">对方申请悔棋</h2>
+            <p className="text-slate-400 text-sm">是否同意对方撤回上一步？</p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={() => handleUndoResponse(true)}
+                className="bg-green-700 hover:bg-green-600 text-white px-6 py-2 rounded-xl transition-colors font-semibold"
+              >
+                同意
+              </button>
+              <button
+                onClick={() => handleUndoResponse(false)}
+                className="bg-slate-600 hover:bg-slate-500 text-white px-6 py-2 rounded-xl transition-colors font-semibold"
+              >
+                拒绝
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Opponent left overlay */}
       {opponentLeft && !winner && (

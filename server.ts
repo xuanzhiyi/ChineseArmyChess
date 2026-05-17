@@ -11,8 +11,16 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 const prisma = new PrismaClient();
 
+interface InMemoryState extends GameState {
+  currentTurn: Color | null;
+  phase: string;
+  lastMove?: LastMove;
+  // Snapshot of state before the last move (for undo)
+  undoSnapshot?: { board: GameState['board']; redMines: number; blackMines: number };
+}
+
 // In-memory game states keyed by room code for fast access
-const gameStates = new Map<string, GameState & { currentTurn: Color | null; phase: string; lastMove?: LastMove }>();
+const gameStates = new Map<string, InMemoryState>();
 
 // Socket id -> { roomCode, color, playerToken }
 const socketRooms = new Map<string, { roomCode: string; color: Color | null; playerToken: string }>();
@@ -231,7 +239,8 @@ app.prepare().then(() => {
         },
       });
 
-      state.lastMove = { fromRow: row, fromCol: col, toRow: row, toCol: col, type: 'flip' };
+      state.lastMove = { fromRow: row, fromCol: col, toRow: row, toCol: col, type: 'flip', by: state.currentTurn! };
+      state.undoSnapshot = undefined; // flips clear the undo snapshot
       io.to(roomCode).emit('game_state', state);
       io.to(roomCode).emit('turn_changed', state.currentTurn!);
     });
@@ -249,12 +258,20 @@ app.prepare().then(() => {
       const room = await prisma.room.findUnique({ where: { code: roomCode } });
       if (!room) return;
 
+      // Save snapshot before applying move (for undo)
+      const snapshot = {
+        board: JSON.parse(JSON.stringify(state.board)) as GameState['board'],
+        redMines: state.redMines,
+        blackMines: state.blackMines,
+      };
+
       const result = applyMove(state, fromRow, fromCol, toRow, toCol, color);
       if ('error' in result) { socket.emit('error', result.error); return; }
 
       state.board = result.board;
       state.redMines = result.redMines;
       state.blackMines = result.blackMines;
+      state.undoSnapshot = snapshot;
 
       await prisma.gameState.update({
         where: { roomId: room.id },
@@ -278,7 +295,7 @@ app.prepare().then(() => {
         },
       });
 
-      state.lastMove = { fromRow, fromCol, toRow, toCol, type: 'move' };
+      state.lastMove = { fromRow, fromCol, toRow, toCol, type: 'move', by: color };
 
       if (result.gameOver && result.winner) {
         await prisma.room.update({ where: { code: roomCode }, data: { status: 'finished', winner: result.winner } });
@@ -389,6 +406,53 @@ app.prepare().then(() => {
       await prisma.room.update({ where: { code: roomCode }, data: { status: 'finished', winner } });
       io.to(roomCode).emit('game_over', winner);
       socketRooms.delete(socket.id);
+    });
+
+    socket.on('request_undo', () => {
+      const sr = socketRooms.get(socket.id);
+      if (!sr || !sr.color) return;
+      const { roomCode, color } = sr;
+      const state = gameStates.get(roomCode);
+      if (!state) return;
+      // Only allow if last move was a move (not flip) made by this player
+      if (!state.undoSnapshot || !state.lastMove || state.lastMove.type !== 'move' || state.lastMove.by !== color) {
+        socket.emit('error', '无法悔棋'); return;
+      }
+      // Notify opponent
+      socket.to(roomCode).emit('undo_requested');
+    });
+
+    socket.on('undo_response', async (accept: boolean) => {
+      const sr = socketRooms.get(socket.id);
+      if (!sr || !sr.color) return;
+      const { roomCode, color } = sr;
+      const state = gameStates.get(roomCode);
+      if (!state || !state.undoSnapshot || !state.lastMove || state.lastMove.type !== 'move') return;
+
+      if (!accept) {
+        socket.to(roomCode).emit('undo_rejected');
+        return;
+      }
+
+      // Revert to snapshot
+      const requesterColor = state.lastMove.by!; // the player who requested undo
+      state.board = state.undoSnapshot.board;
+      state.redMines = state.undoSnapshot.redMines;
+      state.blackMines = state.undoSnapshot.blackMines;
+      state.currentTurn = requesterColor; // give turn back to the requester
+      state.lastMove = undefined;
+      state.undoSnapshot = undefined;
+
+      const room = await prisma.room.findUnique({ where: { code: roomCode } });
+      if (room) {
+        await Promise.all([
+          prisma.gameState.update({ where: { roomId: room.id }, data: { board: state.board as object, redMines: state.redMines, blackMines: state.blackMines } }),
+          prisma.room.update({ where: { code: roomCode }, data: { currentTurn: requesterColor } }),
+        ]);
+      }
+
+      io.to(roomCode).emit('game_state', state);
+      io.to(roomCode).emit('turn_changed', requesterColor);
     });
 
     socket.on('disconnect', () => {
