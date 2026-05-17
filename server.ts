@@ -156,7 +156,7 @@ app.prepare().then(() => {
         socket.emit('error', '还没到你的回合'); return;
       }
 
-      const result = applyFlip(state, row, col);
+      const result = applyFlip(state as unknown as GameState, row, col);
       if ('error' in result) { socket.emit('error', result.error); return; }
 
       state.board = result.board;
@@ -265,7 +265,7 @@ app.prepare().then(() => {
         blackMines: state.blackMines,
       };
 
-      const result = applyMove(state, fromRow, fromCol, toRow, toCol, color);
+      const result = applyMove(state as unknown as GameState, fromRow, fromCol, toRow, toCol, color);
       if ('error' in result) { socket.emit('error', result.error); return; }
 
       state.board = result.board;
