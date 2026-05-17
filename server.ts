@@ -11,7 +11,7 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 const prisma = new PrismaClient();
 
-interface InMemoryState extends GameState {
+interface InMemoryState extends Omit<GameState, 'phase'> {
   currentTurn: Color | null;
   phase: string;
   lastMove?: LastMove;
