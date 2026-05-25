@@ -5,3 +5,5 @@ buildCommand = "npm run build"
 [deploy]
 startCommand = "NODE_ENV=production npx prisma db push && NODE_ENV=production npm run start"
 restartPolicyType = "on_failure"
+healthcheckPath = "/"
+healthcheckTimeout = 30

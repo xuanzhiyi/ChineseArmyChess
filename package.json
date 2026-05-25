@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch server.ts",
-    "build": "next build && prisma generate",
-    "start": "tsx server.ts"
+    "build": "next build && tsc -p tsconfig.server.json && prisma generate",
+    "start": "node dist/server.js"
   },
   "engines": {
     "node": ">=20.9.0"
@@ -17,12 +17,12 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3",
-    "tsx": "^4.21.1"
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.41",
+    "tsx": "^4.21.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
