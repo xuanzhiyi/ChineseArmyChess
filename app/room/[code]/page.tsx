@@ -6,8 +6,7 @@ import { getSocket } from '@/lib/socket-client';
 import { getPlayerToken } from '@/lib/player-token';
 import { Color, GameState, Room } from '@/types/game';
 import Board from '@/components/Board';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy, faCheck, faStar, faSkull, faRightFromBracket, faFlag, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { IconCopy, IconCheck, IconStar, IconSkull, IconRightFromBracket, IconFlag, IconRotateLeft } from '@/components/icons';
 
 export default function RoomPage() {
   const { code } = useParams<{ code: string }>();
@@ -139,7 +138,7 @@ export default function RoomPage() {
           onClick={copyCode}
           className="flex items-center gap-2 bg-slate-600 hover:bg-slate-500 text-white px-3 py-1.5 rounded-lg text-sm font-mono tracking-widest transition-colors border border-slate-500"
         >
-          <FontAwesomeIcon icon={copied ? faCheck : faCopy} className={copied ? 'text-green-400' : 'text-slate-300'} />
+          {copied ? <IconCheck className="text-green-400" /> : <IconCopy className="text-slate-300" />}
           {code}
         </button>
         {myColor && (
@@ -148,7 +147,7 @@ export default function RoomPage() {
             className="flex items-center gap-2 bg-slate-600 hover:bg-red-700 text-white hover:text-red-200 px-3 py-1.5 rounded-lg text-sm transition-colors border border-slate-500"
             title="认输"
           >
-            <FontAwesomeIcon icon={faFlag} />
+            <IconFlag />
           </button>
         )}
         <button
@@ -156,7 +155,7 @@ export default function RoomPage() {
           className="flex items-center gap-2 bg-slate-600 hover:bg-slate-500 text-white px-3 py-1.5 rounded-lg text-sm transition-colors border border-slate-500"
           title="保存并离开"
         >
-          <FontAwesomeIcon icon={faRightFromBracket} />
+          <IconRightFromBracket />
         </button>
       </div>
 
@@ -196,7 +195,7 @@ export default function RoomPage() {
               disabled:bg-slate-800 disabled:border-slate-700 disabled:text-slate-500"
             title={lastMove?.type === 'flip' ? '翻棋不可悔棋' : undoPending ? '等待对方回应' : '申请悔棋'}
           >
-            <FontAwesomeIcon icon={faRotateLeft} />
+            <IconRotateLeft />
             {undoPending ? '等待对方...' : '悔棋'}
           </button>
         </div>
@@ -208,7 +207,7 @@ export default function RoomPage() {
       {undoRequested && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-slate-800 rounded-2xl p-8 text-center space-y-4 border border-slate-600">
-            <FontAwesomeIcon icon={faRotateLeft} className="text-4xl text-slate-300" />
+            <IconRotateLeft className="text-4xl text-slate-300" />
             <h2 className="text-xl font-bold text-white">对方申请悔棋</h2>
             <p className="text-slate-400 text-sm">是否同意对方撤回上一步？</p>
             <div className="flex gap-3 justify-center">
@@ -233,7 +232,7 @@ export default function RoomPage() {
       {opponentLeft && !winner && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-slate-800 rounded-2xl p-8 text-center space-y-4 border border-slate-600">
-            <FontAwesomeIcon icon={faRightFromBracket} className="text-5xl text-slate-400" />
+            <IconRightFromBracket className="text-5xl text-slate-400" />
             <h2 className="text-2xl font-bold text-white">对方已离开房间</h2>
             <button
               onClick={() => window.location.href = '/'}
@@ -249,10 +248,10 @@ export default function RoomPage() {
       {winner && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
           <div className="bg-slate-800 rounded-2xl p-8 text-center space-y-4 border border-slate-600">
-            <FontAwesomeIcon
-              icon={winner === myColor ? faStar : faSkull}
-              className={`text-5xl ${winner === myColor ? 'text-yellow-400' : 'text-slate-500'}`}
-            />
+            {winner === myColor
+              ? <IconStar className="text-5xl text-yellow-400" />
+              : <IconSkull className="text-5xl text-slate-500" />
+            }
             <h2 className="text-2xl font-bold text-white">
               {winner === myColor ? '你赢了！' : '你输了'}
             </h2>

@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSocket } from '@/lib/socket-client';
 import { getPlayerToken } from '@/lib/player-token';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChessBoard, faDoorOpen, faDoorClosed, faKey } from '@fortawesome/free-solid-svg-icons';
+import { IconChessBoard, IconDoorOpen, IconDoorClosed, IconKey } from '@/components/icons';
 
 export default function Home() {
   const router = useRouter();
@@ -43,7 +42,7 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
-          <FontAwesomeIcon icon={faChessBoard} className="text-red-400 text-5xl" />
+          <IconChessBoard className="text-red-400 text-5xl" />
           <h1 className="text-4xl font-bold text-white tracking-widest">军棋</h1>
           <p className="text-slate-400 text-sm">暗棋对战</p>
         </div>
@@ -53,7 +52,7 @@ export default function Home() {
           disabled={loading !== null}
           className="w-full flex items-center justify-center gap-3 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-semibold py-4 rounded-xl transition-colors text-lg"
         >
-          <FontAwesomeIcon icon={faDoorOpen} />
+          <IconDoorOpen />
           {loading === 'create' ? '创建中...' : '创建房间'}
         </button>
 
@@ -65,7 +64,7 @@ export default function Home() {
 
         <div className="space-y-3">
           <div className="relative">
-            <FontAwesomeIcon icon={faKey} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <IconKey className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               value={joinCode}
               onChange={e => setJoinCode(e.target.value.toUpperCase())}
@@ -80,7 +79,7 @@ export default function Home() {
             disabled={loading !== null}
             className="w-full flex items-center justify-center gap-3 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-white font-semibold py-4 rounded-xl transition-colors text-lg"
           >
-            <FontAwesomeIcon icon={faDoorClosed} />
+            <IconDoorClosed />
             {loading === 'join' ? '加入中...' : '加入房间'}
           </button>
         </div>
