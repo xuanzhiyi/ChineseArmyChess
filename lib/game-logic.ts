@@ -1,4 +1,4 @@
-import { Board, Cell, Color, GameState, Piece, Rank, RANK_ORDER } from '@/types/game';
+import { Board, Cell, Color, GameState, Piece, Rank, RANK_ORDER } from '../types/game';
 import {
   ROWS, COLS, isCamp, isHQ,
   getAdjacentCells, getRailwayReachable, getEngineerRailwayReachable, RAILWAY_ROWS,
