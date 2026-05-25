@@ -490,6 +490,14 @@ app.prepare().then(() => {
       }
       console.log(`Evicted idle room ${code} from memory`);
     }
+
+    const mem = process.memoryUsage();
+    console.log(
+      `[mem] rss=${Math.round(mem.rss/1024/1024)}MB` +
+      ` heap=${Math.round(mem.heapUsed/1024/1024)}/${Math.round(mem.heapTotal/1024/1024)}MB` +
+      ` ext=${Math.round(mem.external/1024/1024)}MB` +
+      ` rooms=${gameStates.size} sockets=${socketRooms.size}`
+    );
   }, 5 * 60 * 1000);
 
   const port = parseInt(process.env.PORT || '3000', 10);
