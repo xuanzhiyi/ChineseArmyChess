@@ -25,6 +25,13 @@ const gameStates = new Map<string, InMemoryState>();
 // Socket id -> { roomCode, color, playerToken }
 const socketRooms = new Map<string, { roomCode: string; color: Color | null; playerToken: string }>();
 
+// Last activity timestamp per room — used to evict idle sessions from memory
+const lastActivity = new Map<string, number>();
+
+function touchRoom(code: string) {
+  lastActivity.set(code, Date.now());
+}
+
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
@@ -93,6 +100,7 @@ app.prepare().then(() => {
       });
 
       socketRooms.set(socket.id, { roomCode: code, color: null, playerToken });
+      touchRoom(code);
       socket.join(code);
 
       const gs = room.gameState!;
@@ -122,6 +130,7 @@ app.prepare().then(() => {
       });
 
       socketRooms.set(socket.id, { roomCode: code.toUpperCase(), color: null, playerToken });
+      touchRoom(code.toUpperCase());
       socket.join(code.toUpperCase());
 
       const state = gameStates.get(code.toUpperCase());
@@ -156,6 +165,7 @@ app.prepare().then(() => {
         socket.emit('error', '还没到你的回合'); return;
       }
 
+      touchRoom(roomCode);
       const result = applyFlip(state as unknown as GameState, row, col);
       if ('error' in result) { socket.emit('error', result.error); return; }
 
@@ -258,6 +268,8 @@ app.prepare().then(() => {
       const room = await prisma.room.findUnique({ where: { code: roomCode } });
       if (!room) return;
 
+      touchRoom(roomCode);
+
       // Save snapshot before applying move (for undo)
       const snapshot = {
         board: JSON.parse(JSON.stringify(state.board)) as GameState['board'],
@@ -339,6 +351,7 @@ app.prepare().then(() => {
       }
 
       socketRooms.set(socket.id, { roomCode: upperCode, color, playerToken });
+      touchRoom(upperCode);
 
       socket.emit('room_joined', {
         room: {
@@ -460,6 +473,24 @@ app.prepare().then(() => {
       console.log('disconnected:', socket.id);
     });
   });
+
+  // Evict game states for rooms idle more than 30 minutes.
+  // Game state is fully persisted in DB so players can seamlessly reconnect.
+  setInterval(() => {
+    const cutoff = Date.now() - 30 * 60 * 1000;
+    const stale: string[] = [];
+    for (const [code, ts] of lastActivity) {
+      if (ts < cutoff) stale.push(code);
+    }
+    for (const code of stale) {
+      gameStates.delete(code);
+      lastActivity.delete(code);
+      for (const [socketId, info] of socketRooms) {
+        if (info.roomCode === code) socketRooms.delete(socketId);
+      }
+      console.log(`Evicted idle room ${code} from memory`);
+    }
+  }, 5 * 60 * 1000);
 
   const port = parseInt(process.env.PORT || '3000', 10);
   httpServer.listen(port, () => {
