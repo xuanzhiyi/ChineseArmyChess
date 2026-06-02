@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch server.ts",
     "build": "next build && tsc -p tsconfig.server.json && prisma generate",
-    "start": "node dist/server.js"
+    "start": "node --max-old-space-size=256 dist/server.js"
   },
   "engines": {
     "node": ">=20.9.0"
