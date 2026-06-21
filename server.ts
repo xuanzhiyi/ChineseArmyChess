@@ -449,6 +449,9 @@ app.prepare().then(() => {
       if (!state.undoSnapshot || !state.lastMove || state.lastMove.type !== 'move' || state.lastMove.by !== color) {
         socket.emit('error', '无法悔棋'); return;
       }
+      if ((state.undoUsed?.[color] ?? 0) >= 3) {
+        socket.emit('error', '悔棋次数已用完（最多3次）'); return;
+      }
       // Notify opponent
       socket.to(roomCode).emit('undo_requested');
     });
@@ -473,6 +476,8 @@ app.prepare().then(() => {
       state.currentTurn = requesterColor; // give turn back to the requester
       state.lastMove = undefined;
       state.undoSnapshot = undefined;
+      if (!state.undoUsed) state.undoUsed = { red: 0, black: 0 };
+      state.undoUsed[requesterColor]++;
 
       const room = await prisma.room.findUnique({ where: { code: roomCode } });
       if (room) {

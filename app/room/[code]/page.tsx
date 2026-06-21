@@ -140,8 +140,9 @@ export default function RoomPage() {
   const isMyTurn = myColor !== null && currentTurn === myColor;
   const phase = gameState?.phase ?? 'flipping';
   const lastMove = gameState?.lastMove;
-  // Undo button: only when I just moved (not my turn now) and last move was a piece move
-  const canRequestUndo = !isMyTurn && myColor !== null && lastMove?.type === 'move' && lastMove?.by === myColor && !undoPending;
+  const undoRemaining = myColor ? 3 - (gameState?.undoUsed?.[myColor] ?? 0) : 0;
+  // Undo button: only when I just moved (not my turn now), last move was a piece move, and uses remain
+  const canRequestUndo = !isMyTurn && myColor !== null && lastMove?.type === 'move' && lastMove?.by === myColor && !undoPending && undoRemaining > 0;
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-red-950 to-slate-900 flex flex-col items-center pt-2 px-3 pb-4 gap-2">
@@ -207,10 +208,10 @@ export default function RoomPage() {
               disabled:opacity-30 disabled:cursor-not-allowed
               enabled:bg-slate-600 enabled:hover:bg-slate-500 enabled:border-slate-500 enabled:text-white
               disabled:bg-slate-800 disabled:border-slate-700 disabled:text-slate-500"
-            title={lastMove?.type === 'flip' ? '翻棋不可悔棋' : undoPending ? '等待对方回应' : '申请悔棋'}
+            title={undoRemaining === 0 ? '悔棋次数已用完' : lastMove?.type === 'flip' ? '翻棋不可悔棋' : undoPending ? '等待对方回应' : '申请悔棋'}
           >
             <IconRotateLeft />
-            {undoPending ? '等待对方...' : '悔棋'}
+            {undoPending ? '等待对方...' : `悔棋 (${undoRemaining})`}
           </button>
         </div>
       )}

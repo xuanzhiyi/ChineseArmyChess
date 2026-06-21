@@ -105,6 +105,7 @@ export interface GameState {
   blackMines: number;
   lastMove?: LastMove;
   moveHistory?: MoveEntry[];
+  undoUsed?: { red: number; black: number };
 }
 
 export interface Room {
