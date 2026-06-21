@@ -46,6 +46,27 @@ export const RANK_LABELS: Record<Rank, string> = {
   flag: '军旗',
 };
 
+export const PIECE_INITIAL_COUNTS: Record<Rank, number> = {
+  commander: 1,
+  general: 1,
+  lt_general: 2,
+  major_general: 2,
+  colonel: 2,
+  lt_colonel: 2,
+  major: 3,
+  captain: 3,
+  engineer: 3,
+  bomb: 2,
+  mine: 3,
+  flag: 1,
+};
+
+export const RANK_DISPLAY_ORDER: Rank[] = [
+  'commander', 'general', 'lt_general', 'major_general',
+  'colonel', 'lt_colonel', 'major', 'captain', 'engineer',
+  'bomb', 'mine', 'flag',
+];
+
 export interface Piece {
   id: string;       // unique piece id
   rank: Rank;

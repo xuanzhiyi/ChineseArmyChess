@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getSocket } from '@/lib/socket-client';
 import { getPlayerToken } from '@/lib/player-token';
-import { Color, GameState, Room, RANK_LABELS } from '@/types/game';
+import { Color, GameState, Room, Rank, RANK_LABELS, PIECE_INITIAL_COUNTS, RANK_DISPLAY_ORDER } from '@/types/game';
 import Board from '@/components/Board';
 import { IconCopy, IconCheck, IconStar, IconSkull, IconRightFromBracket, IconFlag, IconRotateLeft } from '@/components/icons';
 
@@ -123,6 +123,20 @@ export default function RoomPage() {
     if (accept) setUndoPending(false);
   }
 
+  const pieceCounts = useMemo(() => {
+    if (!gameState) return null;
+    const counts: Record<Color, Partial<Record<Rank, number>>> = { red: {}, black: {} };
+    for (const row of gameState.board) {
+      for (const cell of row) {
+        if (cell.piece) {
+          const { color, rank } = cell.piece;
+          counts[color][rank] = (counts[color][rank] ?? 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [gameState]);
+
   const isMyTurn = myColor !== null && currentTurn === myColor;
   const phase = gameState?.phase ?? 'flipping';
   const lastMove = gameState?.lastMove;
@@ -219,6 +233,31 @@ export default function RoomPage() {
                     {e.captured ? <span className="text-slate-500"> × {RANK_LABELS[e.captured]}</span> : null}
                   </div>
                 ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Piece counts — remaining pieces per rank per player */}
+      {gameState?.phase === 'playing' && pieceCounts && (
+        <div className="w-full bg-slate-800/60 rounded-xl p-2 border border-slate-700 text-xs mt-1">
+          <div className="grid grid-cols-3 text-center pb-1 mb-1 border-b border-slate-700">
+            <span className="text-red-400 font-semibold">红方</span>
+            <span className="text-slate-500">棋子</span>
+            <span className="text-slate-300 font-semibold">黑方</span>
+          </div>
+          {RANK_DISPLAY_ORDER.map(rank => {
+            const redCount = pieceCounts.red[rank] ?? 0;
+            const blackCount = pieceCounts.black[rank] ?? 0;
+            const initial = PIECE_INITIAL_COUNTS[rank];
+            const redLost = redCount < initial;
+            const blackLost = blackCount < initial;
+            return (
+              <div key={rank} className="grid grid-cols-3 text-center py-0.5">
+                <span className={redLost ? 'text-red-300' : 'text-slate-600'}>×{redCount}</span>
+                <span className={redLost || blackLost ? 'text-slate-400' : 'text-slate-600'}>{RANK_LABELS[rank]}</span>
+                <span className={blackLost ? 'text-slate-300' : 'text-slate-600'}>×{blackCount}</span>
               </div>
             );
           })}
