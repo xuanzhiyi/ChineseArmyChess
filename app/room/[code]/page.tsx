@@ -217,20 +217,20 @@ export default function RoomPage() {
 
       {/* Move history — last 5 moves per player */}
       {gameState?.moveHistory && gameState.moveHistory.length > 0 && (
-        <div className="flex gap-3 w-full text-xs mt-1">
+        <div className="flex gap-3 w-full mt-1">
           {(['red', 'black'] as Color[]).map(side => {
             const entries = [...gameState!.moveHistory!].filter(e => e.color === side).slice(-5).reverse();
             return (
-              <div key={side} className="flex-1 bg-slate-800/60 rounded-xl p-2 border border-slate-700">
-                <div className={`text-center font-semibold mb-1 ${side === 'red' ? 'text-red-400' : 'text-slate-300'}`}>
+              <div key={side} className="flex-1 bg-slate-800/60 rounded-xl p-3 border border-slate-700">
+                <div className={`text-center font-bold text-base mb-1 ${side === 'red' ? 'text-red-400' : 'text-slate-200'}`}>
                   {side === 'red' ? '红方' : '黑方'}
                 </div>
                 {entries.length === 0 ? (
-                  <div className="text-slate-600 text-center text-xs">—</div>
+                  <div className="text-slate-500 text-center text-sm">—</div>
                 ) : entries.map((e, i) => (
-                  <div key={i} className="text-slate-400 py-0.5">
+                  <div key={i} className="text-slate-300 text-sm py-0.5">
                     {e.type === 'flip' ? '翻' : '动'} {RANK_LABELS[e.rank]}
-                    {e.captured ? <span className="text-slate-500"> × {RANK_LABELS[e.captured]}</span> : null}
+                    {e.captured ? <span className="text-slate-400"> × {RANK_LABELS[e.captured]}</span> : null}
                   </div>
                 ))}
               </div>
@@ -241,11 +241,11 @@ export default function RoomPage() {
 
       {/* Piece counts — remaining pieces per rank per player */}
       {gameState?.phase === 'playing' && pieceCounts && (
-        <div className="w-full bg-slate-800/60 rounded-xl p-2 border border-slate-700 text-xs mt-1">
-          <div className="grid grid-cols-3 text-center pb-1 mb-1 border-b border-slate-700">
-            <span className="text-red-400 font-semibold">红方</span>
-            <span className="text-slate-500">棋子</span>
-            <span className="text-slate-300 font-semibold">黑方</span>
+        <div className="w-full bg-slate-800/60 rounded-xl p-3 border border-slate-700 mt-1">
+          <div className="grid grid-cols-3 text-center pb-2 mb-1 border-b border-slate-600">
+            <span className="text-red-400 font-bold text-base">红方</span>
+            <span className="text-slate-400 text-sm">棋子</span>
+            <span className="text-slate-200 font-bold text-base">黑方</span>
           </div>
           {RANK_DISPLAY_ORDER.map(rank => {
             const redCount = pieceCounts.red[rank] ?? 0;
@@ -254,10 +254,10 @@ export default function RoomPage() {
             const redLost = redCount < initial;
             const blackLost = blackCount < initial;
             return (
-              <div key={rank} className="grid grid-cols-3 text-center py-0.5">
-                <span className={redLost ? 'text-red-300' : 'text-slate-600'}>×{redCount}</span>
-                <span className={redLost || blackLost ? 'text-slate-400' : 'text-slate-600'}>{RANK_LABELS[rank]}</span>
-                <span className={blackLost ? 'text-slate-300' : 'text-slate-600'}>×{blackCount}</span>
+              <div key={rank} className="grid grid-cols-3 text-center py-1">
+                <span className={redLost ? 'text-red-300 font-semibold text-base' : 'text-slate-500 text-sm'}>×{redCount}</span>
+                <span className={`text-sm ${redLost || blackLost ? 'text-slate-200' : 'text-slate-400'}`}>{RANK_LABELS[rank]}</span>
+                <span className={blackLost ? 'text-slate-100 font-semibold text-base' : 'text-slate-500 text-sm'}>×{blackCount}</span>
               </div>
             );
           })}
