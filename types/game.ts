@@ -67,7 +67,14 @@ export interface LastMove {
   toRow: number;
   toCol: number;
   type: 'move' | 'flip';
-  by?: Color; // which color made this move
+  by?: Color;
+}
+
+export interface MoveEntry {
+  color: Color;
+  type: 'flip' | 'move';
+  rank: Rank;
+  captured?: Rank;
 }
 
 export interface GameState {
@@ -76,6 +83,7 @@ export interface GameState {
   redMines: number;
   blackMines: number;
   lastMove?: LastMove;
+  moveHistory?: MoveEntry[];
 }
 
 export interface Room {

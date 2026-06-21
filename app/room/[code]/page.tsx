@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getSocket } from '@/lib/socket-client';
 import { getPlayerToken } from '@/lib/player-token';
-import { Color, GameState, Room } from '@/types/game';
+import { Color, GameState, Room, RANK_LABELS } from '@/types/game';
 import Board from '@/components/Board';
 import { IconCopy, IconCheck, IconStar, IconSkull, IconRightFromBracket, IconFlag, IconRotateLeft } from '@/components/icons';
 
@@ -198,6 +198,30 @@ export default function RoomPage() {
             <IconRotateLeft />
             {undoPending ? '等待对方...' : '悔棋'}
           </button>
+        </div>
+      )}
+
+      {/* Move history — last 5 moves per player */}
+      {gameState?.moveHistory && gameState.moveHistory.length > 0 && (
+        <div className="flex gap-3 w-full text-xs mt-1">
+          {(['red', 'black'] as Color[]).map(side => {
+            const entries = [...gameState!.moveHistory!].filter(e => e.color === side).slice(-5).reverse();
+            return (
+              <div key={side} className="flex-1 bg-slate-800/60 rounded-xl p-2 border border-slate-700">
+                <div className={`text-center font-semibold mb-1 ${side === 'red' ? 'text-red-400' : 'text-slate-300'}`}>
+                  {side === 'red' ? '红方' : '黑方'}
+                </div>
+                {entries.length === 0 ? (
+                  <div className="text-slate-600 text-center text-xs">—</div>
+                ) : entries.map((e, i) => (
+                  <div key={i} className="text-slate-400 py-0.5">
+                    {e.type === 'flip' ? '翻' : '动'} {RANK_LABELS[e.rank]}
+                    {e.captured ? <span className="text-slate-500"> × {RANK_LABELS[e.captured]}</span> : null}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
 

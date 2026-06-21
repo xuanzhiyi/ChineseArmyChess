@@ -4,7 +4,7 @@ import next from 'next';
 import { Server } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
 import { createInitialBoard, applyFlip, applyMove } from './lib/game-logic';
-import { Color, GameState, LastMove } from './types/game';
+import { Color, GameState, LastMove, MoveEntry } from './types/game';
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -225,6 +225,10 @@ app.prepare().then(() => {
 
         // Tell the flipper their color directly
         socket.emit('color_assigned', flippedColor);
+
+        if (!state.moveHistory) state.moveHistory = [];
+        state.moveHistory.push({ color: flippedColor, type: 'flip', rank: 'mine' });
+        if (state.moveHistory.length > 10) state.moveHistory.shift();
       } else {
         // Regular flip - switch turn
         state.currentTurn = state.currentTurn === 'red' ? 'black' : 'red';
@@ -232,6 +236,12 @@ app.prepare().then(() => {
           prisma.gameState.update({ where: { roomId: room.id }, data: { board: state.board as object } }),
           prisma.room.update({ where: { code: roomCode }, data: { currentTurn: state.currentTurn } }),
         ]);
+
+        if (sr.color) {
+          if (!state.moveHistory) state.moveHistory = [];
+          state.moveHistory.push({ color: sr.color, type: 'flip', rank: result.flippedPiece.rank });
+          if (state.moveHistory.length > 10) state.moveHistory.shift();
+        }
       }
 
       // Log move
@@ -277,6 +287,7 @@ app.prepare().then(() => {
         blackMines: state.blackMines,
       };
 
+      const movingRank = state.board[fromRow]?.[fromCol]?.piece?.rank;
       const result = applyMove(state as unknown as GameState, fromRow, fromCol, toRow, toCol, color);
       if ('error' in result) { socket.emit('error', result.error); return; }
 
@@ -284,6 +295,13 @@ app.prepare().then(() => {
       state.redMines = result.redMines;
       state.blackMines = result.blackMines;
       state.undoSnapshot = snapshot;
+
+      if (movingRank) {
+        const entry: MoveEntry = { color, type: 'move', rank: movingRank, ...(result.captured ? { captured: result.captured.rank } : {}) };
+        if (!state.moveHistory) state.moveHistory = [];
+        state.moveHistory.push(entry);
+        if (state.moveHistory.length > 10) state.moveHistory.shift();
+      }
 
       await prisma.gameState.update({
         where: { roomId: room.id },
