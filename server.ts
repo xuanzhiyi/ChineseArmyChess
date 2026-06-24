@@ -1,8 +1,9 @@
-import { createServer } from 'http';
+import { createServer, IncomingMessage } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import { Server } from 'socket.io';
 import { PrismaClient } from '@prisma/client';
+import { scryptSync, randomBytes, timingSafeEqual } from 'crypto';
 import { createInitialBoard, applyFlip, applyMove } from './lib/game-logic';
 import { Color, GameState, LastMove, MoveEntry } from './types/game';
 
@@ -37,9 +38,95 @@ function generateRoomCode(): string {
   return Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex');
+  const hash = scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  const [salt, hash] = stored.split(':');
+  if (!salt || !hash) return false;
+  const input = scryptSync(password, salt, 64);
+  return timingSafeEqual(input, Buffer.from(hash, 'hex'));
+}
+
+function readBody(req: IncomingMessage): Promise<Record<string, string>> {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', chunk => { data += chunk; });
+    req.on('end', () => { try { resolve(JSON.parse(data) as Record<string, string>); } catch { reject(new Error('Invalid JSON')); } });
+    req.on('error', reject);
+  });
+}
+
 app.prepare().then(() => {
   const httpServer = createServer(async (req, res) => {
     const parsedUrl = parse(req.url!, true);
+
+    if (req.method === 'POST' && parsedUrl.pathname === '/api/auth/register') {
+      try {
+        const { username, password, token } = await readBody(req);
+        if (!username || !password) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '用户名和密码不能为空' })); return; }
+        if (!/^[\w一-龥]{2,16}$/.test(username)) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '用户名2-16字符，支持字母数字下划线和汉字' })); return; }
+        if (password.length < 4) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '密码至少4位' })); return; }
+        const existing = await prisma.player.findUnique({ where: { username } });
+        if (existing) { res.writeHead(409, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '用户名已被使用' })); return; }
+        const playerToken = token || crypto.randomUUID();
+        const tokenTaken = await prisma.player.findUnique({ where: { token: playerToken } });
+        if (tokenTaken) { res.writeHead(409, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '此设备已绑定账号，请直接登录' })); return; }
+        await prisma.player.create({ data: { username, passwordHash: hashPassword(password), token: playerToken } });
+        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ username, token: playerToken }));
+      } catch { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '服务器错误' })); }
+      return;
+    }
+
+    if (req.method === 'POST' && parsedUrl.pathname === '/api/auth/login') {
+      try {
+        const { username, password } = await readBody(req);
+        if (!username || !password) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '用户名和密码不能为空' })); return; }
+        const player = await prisma.player.findUnique({ where: { username } });
+        if (!player || !verifyPassword(password, player.passwordHash)) { res.writeHead(401, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '用户名或密码错误' })); return; }
+        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ username: player.username, token: player.token }));
+      } catch { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '服务器错误' })); }
+      return;
+    }
+
+    if (req.method === 'GET' && parsedUrl.pathname === '/api/scoreboard') {
+      try {
+        const days = Math.min(parseInt(parsedUrl.query['days'] as string ?? '7', 10) || 7, 30);
+        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+        const [players, recentRooms] = await Promise.all([
+          prisma.player.findMany({ select: { username: true, token: true } }),
+          prisma.room.findMany({
+            where: { status: 'finished', winner: { not: null }, updatedAt: { gte: since } },
+            select: { playerRedToken: true, playerBlackToken: true, winner: true, updatedAt: true },
+            orderBy: { updatedAt: 'desc' },
+            take: 100,
+          }),
+        ]);
+        const tokenToName: Record<string, string> = Object.fromEntries(players.map(p => [p.token, p.username]));
+        const stats: Record<string, { username: string; wins: number; losses: number }> = {};
+        for (const room of recentRooms) {
+          for (const [tok, side] of [[room.playerRedToken, 'red'], [room.playerBlackToken, 'black']] as [string | null, string][]) {
+            if (!tok) continue;
+            const name = tokenToName[tok];
+            if (!name) continue;
+            if (!stats[name]) stats[name] = { username: name, wins: 0, losses: 0 };
+            if (room.winner === side) stats[name].wins++; else stats[name].losses++;
+          }
+        }
+        const leaderboard = Object.values(stats).sort((a, b) => b.wins - a.wins || a.losses - b.losses);
+        const matches = recentRooms.slice(0, 30).map(r => ({
+          redPlayer: r.playerRedToken ? (tokenToName[r.playerRedToken] ?? null) : null,
+          blackPlayer: r.playerBlackToken ? (tokenToName[r.playerBlackToken] ?? null) : null,
+          winner: r.winner,
+          date: r.updatedAt.toISOString(),
+        })).filter(m => m.redPlayer || m.blackPlayer);
+        res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ leaderboard, matches, days }));
+      } catch { res.writeHead(500, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: '服务器错误' })); }
+      return;
+    }
 
     if (req.method === 'GET' && parsedUrl.pathname === '/api/cron/cleanup') {
       const secret = process.env.CRON_SECRET;
